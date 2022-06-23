@@ -10,3 +10,5 @@ class Exercise(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
     name = models.CharField(max_length=150, blank=True, null=True)
     category = models.ForeignKey(Category, on_delete=models.SET_NULL, null=True)
+
+
