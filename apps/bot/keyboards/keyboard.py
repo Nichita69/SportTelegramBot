@@ -8,8 +8,9 @@ user_kb.row(b1).add(b11)
 
 bthRandom = KeyboardButton('Мои данные🎫')
 bthOther = KeyboardButton('Другое№')
+erf = KeyboardButton('Мои Силовые')
 
-mainMenu = ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True).row(bthRandom, bthOther)
+mainMenu = ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True).row(bthRandom, bthOther,erf)
 
 b15 = KeyboardButton('Monday')
 b16 = KeyboardButton('Thuesday')
@@ -34,7 +35,7 @@ user_goo = ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True)
 user_goo.add(b25, b26, b11)
 
 b27 = KeyboardButton('Нажми сюда если отдыхаеш')
-b28 = KeyboardButton('Нежми сюда если пидор')
+b28 = KeyboardButton('Нежми сюда если ')
 b11 = KeyboardButton('Назад⬅')
 user_gooo = ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True)
 user_gooo.add(b27, b28, b11)
