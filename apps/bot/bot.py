@@ -1,16 +1,18 @@
 import logging
 import random
+from uuid import uuid4
 
 from aiogram import Bot, Dispatcher, executor, types
 from aiogram.contrib.fsm_storage.memory import MemoryStorage
 from aiogram.dispatcher import FSMContext
 from aiogram.dispatcher.filters.state import StatesGroup, State
-from aiogram.types import ReplyKeyboardMarkup, KeyboardButton
+from aiogram.types import ReplyKeyboardMarkup, KeyboardButton, InlineQueryResult, InlineQuery, InputTextMessageContent, \
+    InlineQueryResultArticle
 from asgiref.sync import sync_to_async
 from unsync import unsync
 
 from .keyboards.keyboard import user_kb, mainMenu, kb_user, user_go, user_goo, user_gooo, user_kg, user_izmeniti, \
-    user_jim
+    user_jim, dataa_kb, category
 from .. import exercise
 
 from ..exercise.models import Exercise
@@ -30,10 +32,12 @@ class UserState(StatesGroup):
     heightt = State()
     mk_weight = State()
     bench = State()
+    dubbell = State()
+    all_exersise = State()
 
 
 class MaximExersiseState(StatesGroup):
-    user_id = State()
+    grey = State()
 
 
 # ****************КЛИЕНТСКАЯ ЧАСТЬ************
@@ -84,38 +88,98 @@ async def command_help(message: types.Message):
     )
 
 
-@dp.message_handler(lambda message: message.text and 'Мои Силовые' in message.text)
-async def my_date(message: types.Message):
-    exercise = await sync_to_async(
-      MaximExersise.objects.filter(),
+@unsync
+def update_height(message):
+    user = TelegramUser.objects.get(chat_id=message.from_exercise.id)
+    user.height = message.text
+    user.save()
+
+
+def get_all_exercise():
+    return Exercise.objects.all()
+
+
+def get_inline_query(exercises):
+    results = []
+    for exercise in exercises:
+        results.append(
+            InlineQueryResultArticle(
+                id=exercise.id,
+                title=exercise.name,
+                input_message_content=InputTextMessageContent(exercise.name)
+            )
+        )
+    return results
+
+
+@dp.message_handler(lambda message: message.text and 'Chest and Triceps' in message.text)
+async def my_data(message: types.Message):
+    user = await sync_to_async(
+        TelegramUser.objects.get,
         thread_sensitive=True
     )(
-
+        chat_id=message.from_user.id
     )
-
-    b20 = KeyboardButton(f'Никита ({exercise.user_id})')
-    b21 = KeyboardButton('Назад⬅')
-    data_kbb = ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True)
-    data_kbb.add(b21, b20)
 
     await bot.send_message(
         message.from_user.id,
-        f'Firsfdt name: {exercise.user_id},\nLast namkje: {exercise.maxim}',
-        reply_markup=data_kbb
+        f'Dumbell press: {user.dumbell_press},\nmaxim bn: {user.bench_presss}\nmaximm bn: {user.bars}',
+        reply_markup=dataa_kb
     )
 
 
-@dp.message_handler(lambda message: message.text and 'Никита' in message.text)
-async def names_of_commands(message: types.Message, state: FSMContext):
-    await MaximExersiseState.user_id.set()
-    await message.answer(text='Введите ваше имя', reply_markup=mainMenu)
+@dp.inline_handler()
+async def my_dataa(inline_query: InlineQuery):
+    exercises = await sync_to_async(get_all_exercise, thread_sensitive=True)()
+    results = list(await sync_to_async(get_inline_query, thread_sensitive=True)(exercises))
+
+    await bot.answer_inline_query(inline_query_id=inline_query.id, results=results, cache_time=1)
 
 
-# @unsync
-# def update_height(message):
-#     user = TelegramUser.objects.get(chat_id=message.from_exercise.id)
-#     user.height = message.text
-#     user.save()
+################Моb eghf;ytybz #########################
+@dp.message_handler(lambda message: message.text and 'Теперь укажите максимуум в жиме лежа' in message.text)
+async def name_step(message: types.Message, state: FSMContext):
+    await UserState.bench.set()
+    if message.answer(text='The first exersaise is bench press'):
+        await bot.send_message(message.from_user.id, text='https://www.borntoworkout.com/wp-content/uploads/2017/11'
+                                                          '/Incline-Bench-Press.jpg')
+    if message.answer(text='https://www.borntoworkout.com/wp-content/uploads/2017/11/Incline-Bench-Press.jpg'):
+        await bot.send_message(message.from_user.id, 'Теперь укажите свой максимум на раз в жиме лежа',
+                               reply_markup=mainMenu)
+
+
+@unsync
+def update_bench_press(message):
+    user = TelegramUser.objects.get(chat_id=message.from_user.id)
+    user.bench_presss = message.text
+    user.save()
+
+
+@dp.message_handler(state=UserState.bench)
+async def put_formula(message, state):
+    update_bench_press(message)
+    await state.finish()
+    await message.answer(text='Отлично сейчас сделаем вам тренировку')
+
+
+@dp.message_handler(lambda message: message.text and 'Укажите максимум в жиме гантелей' in message.text)
+async def nameee_commands(message: types.Message, state: FSMContext):
+    await UserState.dubbell.set()
+    await message.answer(text='Введите ваш максимум  в подьеме на бицепс имя', reply_markup=mainMenu)
+
+
+@unsync
+def update_dumbbell_presss(message):
+    user = TelegramUser.objects.get(chat_id=message.from_user.id)
+    user.dumbell_press = message.text
+    user.save()
+
+
+@dp.message_handler(state=UserState.dubbell)
+async def def_dumbbell(message, state):
+    update_dumbbell_presss(message)
+    await state.finish()
+    await message.answer('Ваше Имя было успешно обновлjено!!!!!!!')
 
 
 @dp.message_handler(lambda message: message.text and 'Мои данные🎫' in message.text)
@@ -131,16 +195,18 @@ async def my_data(message: types.Message):
     b2 = KeyboardButton(f'Изменить фамилию🖊({user.last_name})')
     b3 = KeyboardButton(f'ИЗМЕНИТЬ ВЕС💪({user.weight})')
     b4 = KeyboardButton(f'ИЗМЕНИТЬ РОСТ💪({user.height})')
-    b5 = KeyboardButton('Назад⬅')
-    b6 = KeyboardButton('Тренировка')
+
+    b6 = KeyboardButton('Назад⬅')
+
     data_kb = ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True)
     data_kb.add(b1, b2)
     data_kb.add(b3, b4)
-    data_kb.add(b5,b6)
+    data_kb.add(b6)
 
     await bot.send_message(
         message.from_user.id,
-        f'First name: {user.first_name},\nLast name: {user.last_name},\nChat ID: {user.chat_id},\nWeight kg: {user.weight},\nHeight cm: {user.height},\nHeight cm: {user.bench}',
+        f'First name: {user.first_name},\nLast name: {user.last_name},\nChat ID: {user.chat_id},\nWeight kg: {user.weight}'
+        f',\nHeight cm: {user.height}',
         reply_markup=data_kb
     )
 
@@ -234,16 +300,6 @@ async def back_command(message: types.Message):
     )
 
 
-# @dp.message_handler(lambda message: message.text and '10-15кг' in message.text)
-# async def names_step(message: types.Message, state: FSMContext):
-#     if message.answer(text='ew'):
-#         await bot.send_message(message.from_user.id,
-#                                text='ПО ВАШЕМУ ВЕСУ И РОСТУ ВАШ РАБОЧИЙ ВЕС РАВЕН== ВАШ МАКСМУМ - 20кг', )
-#     if message.answer(text='ПО ВАШЕМУ ВЕСУ И РОСТУ ВАШ РАБОЧИЙ ВЕС РАВЕН== ВАШ МАКСМУМ - 20кг'):
-#         await bot.send_message(message.from_user.id,
-#                                'ВАША ТРЕНИРОВКА= 4 подхода * 8 повторений * ВАШ РАБОЧИЙ ВЕС',
-#                                reply_markup=user_jim)
-
 
 @dp.message_handler(lambda message: message.text and 'Тренировка' in message.text)
 async def name_step(message: types.Message, state: FSMContext):
@@ -257,7 +313,7 @@ async def name_step(message: types.Message, state: FSMContext):
 
 
 @unsync
-def update_lasted_name(message):
+def update_bench_press(message):
     user = TelegramUser.objects.get(chat_id=message.from_user.id)
     user.bench_presss = message.text
     user.save()
@@ -265,25 +321,11 @@ def update_lasted_name(message):
 
 @dp.message_handler(state=UserState.bench)
 async def put_formula(message, state):
+    update_bench_press(message)
     await state.finish()
     await message.answer(text='Сейчас составим для вас формулу !!!!!!!')
 
 
-@dp.message_handler(lambda message: message.text and 'Тренировка утром' in message.text)
-async def name_step(message: types.Message, state: FSMContext):
-    await message.answer(text='1. пресс качат'
-                              '2. т) бегит'
-                              '3. турник'
-                              '4. анжумания')
-
-
-@dp.message_handler(lambda message: message.text and 'Тренировка вечером' in message.text)
-async def name_step(message: types.Message, state: FSMContext):
-    await message.answer(text=' пресс качат'
-                              '2. т) бегит'
-                              '3. турник'
-                              '4. анжумания'
-                              'Гантэбли')
 
 
 @dp.message_handler(lambda message: message.text and 'Нажми сюда если отдыхаеш' in message.text)
@@ -291,9 +333,14 @@ async def name_step(message: types.Message, state: FSMContext):
     await message.answer(text='На чиле на раслабоне пивко хуярить')
 
 
-@dp.message_handler(lambda message: message.text and 'Нежми сюда если' in message.text)
+@dp.message_handler(lambda message: message.text and 'Мои Силовые' in message.text)
 async def name_step(message: types.Message, state: FSMContext):
-    await message.answer(text='🏳️‍🌈🏳️‍🌈🏳️‍🌈🏳️‍🌈🏳️‍🌈🏳️‍🌈🏳️‍🌈')
+    await message.answer(text='🏳️‍🌈🏳️‍🌈🏳️‍🌈🏳️‍🌈🏳️‍🌈🏳️‍🌈🏳️‍🌈', reply_markup=category)
+
+
+#####################Inline################
+
+
 
 
 @dp.message_handler()
@@ -336,4 +383,4 @@ def register_handlers_client(dp: Dispatcher):
 
 
 def register_handlers_clieent(dp: Dispatcher):
-    dp.register_message_handler(sendd_welcome, commands=['help'])
+    dp.register_message_handler(command_help, commands=['help'])
