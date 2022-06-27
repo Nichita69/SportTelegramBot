@@ -1,4 +1,7 @@
-from aiogram.types import ReplyKeyboardMarkup, KeyboardButton, ReplyKeyboardRemove
+from aiogram.types import ReplyKeyboardMarkup, KeyboardButton, ReplyKeyboardRemove, InlineKeyboardMarkup, \
+    InlineKeyboardButton
+
+from apps import exercise
 
 b1 = KeyboardButton('Дни недели')
 b11 = KeyboardButton('Назад⬅')
@@ -6,11 +9,12 @@ b11 = KeyboardButton('Назад⬅')
 user_kb = ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True)
 user_kb.row(b1).add(b11)
 
-bthRandom = KeyboardButton('Мои данные🎫')
-bthOther = KeyboardButton('Другое№')
-erf = KeyboardButton('Мои Силовые')
+bthRandom = KeyboardButton('МОИ ДАННЫЕ💪')
 
-mainMenu = ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True).row(bthRandom, bthOther,erf)
+erf = KeyboardButton('МОИ СИЛЛОВЫЕ💪')
+hfh = KeyboardButton('ТРЕНИРОВКИ💪')
+
+mainMenu = ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True).row(bthRandom, erf).add(hfh)
 
 b15 = KeyboardButton('Monday')
 b16 = KeyboardButton('Thuesday')
@@ -40,36 +44,67 @@ b11 = KeyboardButton('Назад⬅')
 user_gooo = ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True)
 user_gooo.add(b27, b28, b11)
 
-b30 = KeyboardButton('10-15кг')
-b31 = KeyboardButton('15-25кг')
-b32 = KeyboardButton('25-35кг')
-b33 = KeyboardButton('35-45кг')
-b34 = KeyboardButton('45-55кг')
-b35 = KeyboardButton('55-65кг')
-b36 = KeyboardButton('65-75кг')
-b37 = KeyboardButton('75-85кг')
-b38 = KeyboardButton('85-95кг')
-b39 = KeyboardButton('95-105кг')
-b40 = KeyboardButton('105-115кг')
-b41 = KeyboardButton('115-125кг')
-b42 = KeyboardButton('125-135кг')
+b9 = KeyboardButton('ИЗМЕНИТЬ ИМЯ💼')
+b10 = KeyboardButton('ИЗМЕНИТЬ ФАМИЛИЮ💼')
 b11 = KeyboardButton('Назад⬅')
-user_kg = ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True)
-user_kg.add(b30, b31, b32).add(b33, b34, b35, b36, b37, b38, b39, b40, b41, b42, b11)
-
-b9 = KeyboardButton('Изменить имя🖊')
-b10 = KeyboardButton('Изменить фамилию🖊')
-b11 = KeyboardButton('Назад⬅')
-b23 = KeyboardButton('ИЗМЕНИТЬ ВЕС💪')
-b70 = KeyboardButton('ИЗМЕНИТЬ РОСТ💪')
+b23 = KeyboardButton('ИЗМЕНИТЬ ВЕС💼')
+b70 = KeyboardButton('ИЗМЕНИТЬ РОСТ💼')
 user_izmeniti = ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True)
 user_izmeniti.add(b9, b10, b11, b23).row(b70)
 
 b50 = KeyboardButton('Нажми сюда чтобы указать свой максимум в жиме лежа')
 
-
 b75 = KeyboardButton('СДЕЛАЛ ПРЕХОДИМ К СЛЕДУЮЩЕМУ УПРАЖНЕНИЮ')
 b76 = KeyboardButton('Я СЛАБЫЙ')
 b11 = KeyboardButton('Назад⬅')
 user_jim = ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True)
-user_jim.row(b75).add(b76,b11)
+user_jim.row(b75).add(b76, b11)
+
+b7 = KeyboardButton(f'Теперь укажите максимуум в жиме лежа')
+
+b8 = KeyboardButton('Назад⬅')
+
+dataa_kb = ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True)
+dataa_kb.add(b7, b8, )
+
+b101 = KeyboardButton('Brush and Fingers')
+b102 = KeyboardButton('Biceps and Back')
+b103 = KeyboardButton('Arm Training')
+b104 = KeyboardButton('Legs and Shoulders')
+
+category = ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True)
+category.add(b101).add(b102, b103).row(b104)
+
+max_kb = InlineKeyboardMarkup(row_width=1)
+Button = InlineKeyboardButton(text='Добавить', callback_data=f'add-maximum-{exercise}')
+
+max_kb.add(Button)
+
+minipeka = InlineKeyboardMarkup(row_width=2)
+bthSomething = InlineKeyboardButton(text='Чото', switch_inline_query_current_chat='')
+minipeka.insert(bthSomething)
+
+ikb_menu = InlineKeyboardMarkup(row_width=4,
+                                inline_keyboard=[
+                                    [
+                                        InlineKeyboardButton(text='1)Bench_Press', callback_data='1)Bench_Press'),
+                                        InlineKeyboardButton(text='2)Dumbell press', callback_data='2)Dumbell_Press'),
+                                        InlineKeyboardButton(text='3)Bars', callback_data='3)Bensdfch_Press'),
+                                        InlineKeyboardButton(text='4)Elastic', callback_data='4)Bfdench_Press'),
+
+
+
+                                    ],
+                                    [
+
+                                    ]
+
+                                ])
+
+ikb_menaiu = InlineKeyboardMarkup(row_width=2,
+                                  inline_keyboard=[
+                                      [
+                                          InlineKeyboardButton(text='Beancdfgh_Press', callback_data='Показать Тренировку')
+
+                                      ]
+                                  ])
