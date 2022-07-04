@@ -36,6 +36,7 @@ class UserState(StatesGroup):
     all_exersise = State()
     add_maxim = State()
     maxxim = State()
+    work_day = State()
 
 
 class MaximExersiseState(StatesGroup):
@@ -50,7 +51,7 @@ def get_user(user_id: int):
 
 
 def get_exercise(exercise_id: int):
-    return MaximExersise.objects.filter(user_id=exercise_id).first()
+    return MaximExercise.objects.filter(user_id=exercise_id).first()
 
 
 @dp.message_handler(commands=['start'])
@@ -101,8 +102,12 @@ def get_all_exercise():
     return Exercise.objects.all()
 
 
+def get_exercise_by_category(category_id):
+    return Exercise.objects.filter(category_id=category_id)
+
+
 def get_all_exersise():
-    return MaximExersise.objects.all()
+    return MaximExercise.objects.all()
 
 
 def get_inline_query(exercises, user):
@@ -112,8 +117,10 @@ def get_inline_query(exercises, user):
         Button = InlineKeyboardButton(text='Добавить', callback_data=f'add-maximum-{exercise.id}')
         # Button = InlineKeyboardButton(text='Добавить', callback_data=f'1')
         max_kb.add(Button)
-        exercise_maximum = getattr(exercise.maximexersise_set.filter(user=user).first(), 'maxim', None)
-        title = f'{exercise.name}-{exercise_maximum}-{exercise.category.category}'
+        exercise_maximum = getattr(exercise.maximexercise_set.filter(user=user).last(), 'maxim', None)
+        n = exercise_maximum
+
+        title = f'{exercise.name}, {exercise.category.category}, {n}'
         results.append(
             InlineQueryResultArticle(
                 id=exercise.id,
@@ -138,15 +145,13 @@ async def start_maxim(call: types.CallbackQuery):
     await bot.send_message(
         call.from_user.id,
         'Введите максимальную нагрузку:',
-
     )
 
 
 def save_maxim(user_id: int, exercise_id: int, maxim: int):
-    obj, created = MaximExersise.objects.update_or_create(
+    obj, created = MaximExercise.objects.update_or_create(
         user_id=user_id,
         exercise_id=exercise_id,
-        maxim=maxim,
         defaults={'maxim': maxim},
     )
     return obj
@@ -209,12 +214,6 @@ async def put_formula(message, state):
     update_bench_press(message)
     await state.finish()
     await message.answer(text='Отлично сейчас сделаем вам тренировку')
-
-
-@dp.message_handler(lambda message: message.text and 'Укажите максимум в жиме гантелей' in message.text)
-async def nameee_commands(message: types.Message, state: FSMContext):
-    await UserState.dubbell.set()
-    await message.answer(text='Введите ваш максимум  в подьеме на бицепс имя', reply_markup=mainMenu)
 
 
 @unsync
@@ -393,47 +392,64 @@ async def names_steps_with_markdапавкown(message: types.Message, state: FSM
 
 
 @dp.message_handler()
-async def bot_message(message: types.Message, state: FSMContext):
-    if message.text == 'Дни недели':
-        await bot.send_message(message.from_user.id, 'Выберите сегодняшний день', reply_markup=kb_user)
-
-    elif message.text == 'Другое№':
-        await bot.send_message(message.from_user.id, 'Другое№', reply_markup=user_kb)
-
-    elif message.text == 'Monday':
-        await bot.send_message(message.from_user.id, f"{'<b>'}MONDAY IS THE CHEST AND TRICEPS DAY "
-                                                     f"🏋🏼🤸🏽⛹🏾‍♀️🏌🏾‍♀️🤼‍♂️🤼{'</b>'}", parse_mode='HTML',
-                               reply_markup=ikb_menu)
-
-    elif message.text == 'Thuesday':
-        await bot.send_message(message.from_user.id, 'are', reply_markup=fingers)
-
-    elif message.text == 'Wednesday':
-        await bot.send_message(message.from_user.id, 'you', reply_markup=user_go)
-
-    elif message.text == 'Thursday':
-        await bot.send_message(message.from_user.id, 'I', reply_markup=user_go)
-
-    elif message.text == 'Friday':
-        await bot.send_message(message.from_user.id, 'am', reply_markup=user_go)
-
-    elif message.text == 'Saturday':
-        await bot.send_message(message.from_user.id, 'fine', reply_markup=user_go)
-
-    elif message.text == 'Sunday':
-        await bot.send_message(message.from_user.id, 'and', reply_markup=user_go)
+async def bot_message(message: types.Message):
+    # Depend on message.text we can send different messages using match
+    category_id = 0
+    match message.text:
+        case 'Monday':
+            category_id = 1
+        case 'Thursday':
+            category_id = 2
+        case 'Wednesday':
+            category_id = 3
+        case 'Tuesday':
+            category_id = 4
+        case 'Friday':
+            category_id = 5
+        case 'Saturday':
+            category_id = 1
+        case 'Sunday':
+            category_id = 2
+    if category_id != 0:
+        kb = await sync_to_async(get_exercise_keyboard)(category_id)
+        await bot.send_message(
+            chat_id=message.from_user.id,
+            text=f"Let's get exercises!",
+            reply_markup=kb
+        )
 
 
-#                    ХЕНДЛЕР ДЛЯ КИЛЛОГРАМОВ
+# @dp.callback_query_handler(lambda c: c.data.startswith('Показать Тренировку'))
+# async def start_maxim(message: types.Message, state: FSMContext, exercises, user):
+#     for exercise in exercises:
+#         exercise_maximum = getattr(exercise.maximexersise_set.filter(user=user).last(), 'maxim', None)
+#     await bot.send_message(
+#         message.from_user.id,
+#         'exercise_maximum',
+#         reply_markup=mainMenu
+#     )
+
+
+#                    CHEST AND TRICEPS
+
+@dp.callback_query_handler(lambda c: c.data.startswith('◀️Назад'))
+async def go_back(message: types.Message):
+    await bot.send_message(
+        message.from_user.id,
+        'Возвращение назад',
+        reply_markup=mainMenu
+    )
+
 
 @dp.callback_query_handler(lambda c: c.data.startswith('1)Bench_Press'))
 async def start_maxim(message: types.Message, state: FSMContext):
     await bot.send_message(message.from_user.id, 'Первое упражнение это жим лежа'
                            )
     if message.answer(text='Теперь укажите свой максимум на раз в жиме лежа'):
-        await bot.send_message(message.from_user.id, text='https://www.borntoworkout.com/wp-content/uploads/2017/11'
-                                                          '/Incline-Bench-Press.jpg')
-    if message.answer(text='https://www.borntoworkout.com/wp-content/uploads/2017/11/Incline-Bench-Press.jpg'):
+        await bot.send_message(message.from_user.id,
+                               text='https://bodybuilding-and-fitness.ru/wp-content/webp-express/webp-images/doc-root/wp-content/uploads/2020/07/zhim-lezha.jpg.webp')
+    if message.answer(
+            text='https://bodybuilding-and-fitness.ru/wp-content/webp-express/webp-images/doc-root/wp-content/uploads/2020/07/zhim-lezha.jpg.webp'):
         await bot.send_message(message.from_user.id, 'Теперь укажите свой максимум на раз в жиме лежа',
                                reply_markup=ikb_menaiu)
 
@@ -443,15 +459,105 @@ async def start_sdds(message: types.Message, state: FSMContext):
     await bot.send_message(message.from_user.id, 'Второе упражнение жим гантелей'
                            )
     if message.answer(text='Теперь укажите свой максимум на раз в жиме лежа'):
-        await bot.send_message(message.from_user.id, text='https://www.borntoworkout.com/wp-content/uploads/2017/11'
-                                                          '/Incline-Bench-Press.jpg')
-    if message.answer(text='https://www.borntoworkout.com/wp-content/uploads/2017/11/Incline-Bench-Press.jpg'):
-        await bot.send_message(message.from_user.id, 'Теперь укажите свой максимум на раз в жиме лежа',
+        await bot.send_message(message.from_user.id,
+                               text='https://recordregion.ru/wp-content/uploads/8/1/4/814c2feb603bd2370584c7d9f12b8eec.jpeg')
+    if message.answer(
+            text='https://recordregion.ru/wp-content/uploads/8/1/4/814c2feb603bd2370584c7d9f12b8eec.jpeg'):
+        await bot.send_message(message.from_user.id, 'Нажми сюда и мы составим формулу',
                                reply_markup=ikb_menaiu)
 
 
-# @dp.callback_query_handler(lambda c: c.data.startswith('Показать Тренировку'))
-# async def start_maxim(message: types.Message, state: FSMContext):
+@dp.callback_query_handler(lambda c: c.data.startswith('3)Bars'))
+async def start_sddsds(message: types.Message, state: FSMContext):
+    await bot.send_message(message.from_user.id, 'Третье упражнение брусья с доп весом'
+                           )
+    if message.answer(text='Теперь укажите свой максимум на раз в жиме лежа'):
+        await bot.send_message(message.from_user.id,
+                               text='https://alfagym.ru/wp-content/uploads/5/f/7/5f799e907140eff78af9aceda73b2e7f.jpeg')
+    if message.answer(text='https://alfagym.ru/wp-content/uploads/5/f/7/5f799e907140eff78af9aceda73b2e7f.jpeg'):
+        await bot.send_message(message.from_user.id, 'Нажми сюда и мы составим формулу',
+                               reply_markup=ikb_menaiu)
+
+
+@dp.callback_query_handler(lambda c: c.data.startswith('4)Elastic'))
+async def start_sddds(message: types.Message, state: FSMContext):
+    await bot.send_message(message.from_user.id, 'Третье упражнение брусья с доп весом'
+                           )
+    if message.answer(text='Теперь укажите свой максимум на раз в жиме лежа'):
+        await bot.send_message(message.from_user.id,
+                               text='https://bombatelo.ru/wp-content/uploads/2017/08/Programma-trenirovki-grudi-FST-7'
+                                    '-5--768x646.jpg')
+    if message.answer(
+            text='https://bombatelo.ru/wp-content/uploads/2017/08/Programma-trenirovki-grudi-FST-7-5--768x646.jpg'):
+        await bot.send_message(message.from_user.id, 'Нажми сюда и мы составим формулу',
+                               reply_markup=ikb_menaiu)
+
+
+#          Brush and Fingers
+@dp.callback_query_handler(lambda c: c.data.startswith('1)Elasticc'))
+async def start_sddds(message: types.Message, state: FSMContext):
+    await bot.send_message(message.from_user.id, 'Разминка Кисти и пальцев с ризиной'
+                           )
+    if message.answer(text='В этом упражнении нету максимума '):
+        await bot.send_message(message.from_user.id,
+                               text='https://tutknow.ru/uploads/posts/2016-05/1462470854_princip-vzaimosvyazi-muskulov.jpg')
+    if message.answer(
+            text='https://tutknow.ru/uploads/posts/2016-05/1462470854_princip-vzaimosvyazi-muskulov.jpg'):
+        await bot.send_message(message.from_user.id, 'Нажми сюда и мы составим формулу',
+                               reply_markup=ikb_menaiu)
+
+
+@dp.callback_query_handler(lambda c: c.data.startswith('2)dead lifting Finger'))
+async def start_sddds(message: types.Message, state: FSMContext):
+    await bot.send_message(message.from_user.id, 'Становая тяга пальцами'
+                           )
+    if message.answer(text='В этом упражнении нету максимума '):
+        await bot.send_message(message.from_user.id,
+                               text='https://i.pinimg.com/originals/10/f1/e8/10f1e889c471a1b967b221bb6b4e3ec8.jpg')
+    if message.answer(
+            text='https://i.pinimg.com/originals/10/f1/e8/10f1e889c471a1b967b221bb6b4e3ec8.jpg'):
+        await bot.send_message(message.from_user.id, 'Нажми сюда и мы составим формулу',
+                               reply_markup=ikb_menaiu)
+
+
+@dp.callback_query_handler(lambda c: c.data.startswith('3)Block Arm'))
+async def start_sddds(message: types.Message, state: FSMContext):
+    await bot.send_message(message.from_user.id, 'Качаем Кисти на блоке'
+                           )
+    if message.answer(text='В этом упражнении нету максимума '):
+        await bot.send_message(message.from_user.id,
+                               text='https://ru.armpower.net/img/o/8bfa35_dsc-8989net.jpg')
+    if message.answer(
+            text='https://ru.armpower.net/img/o/8bfa35_dsc-8989net.jpg'):
+        await bot.send_message(message.from_user.id, 'Нажми сюда и мы составим формулу',
+                               reply_markup=ikb_menaiu)
+
+
+@dp.callback_query_handler(lambda c: c.data.startswith('4)Twisting rod'))
+async def start_sddds(message: types.Message, state: FSMContext):
+    await bot.send_message(message.from_user.id, 'Скручивания штанги на кисть'
+                           )
+    if message.answer(text='В этом упражнерарапрпар нету максимума '):
+        await bot.send_message(message.from_user.id,
+                               text='https://alfagym.ru/wp-content/uploads/7/8/c/78cc3024e79fd662e22a519dba38fe1e.jpeg')
+    if message.answer(
+            text='https://alfagym.ru/wp-content/uploads/7/8/c/78cc3024e79fd662e22a519dba38fe1e.jpeg'):
+        await bot.send_message(message.from_user.id, 'Нажми сюда и мы составим формулу',
+                               reply_markup=ikb_menaiu)
+
+
+@dp.callback_query_handler(lambda c: c.data.startswith('5)Luchevaia'))
+async def start_sddds(message: types.Message, state: FSMContext):
+    await bot.send_message(message.from_user.id, 'Упражнение для плечелучевой'
+                           )
+    if message.answer(text='В этом упражнении нету максимума '):
+        await bot.send_message(message.from_user.id,
+                               text='https://avatars.mds.yandex.net/get-zen_doc/3517023/pub_5f29786a9bd10957f02e6385_5f2978a1b1ec2205d8bebdff/scale_1200')
+    if message.answer(
+            text='https://avatars.mds.yandex.net/get-zen_doc/3517023/pub_5f29786a9bd10957f02e6385_5f2978a1b1ec2205d8bebdff/scale_1200'):
+        await bot.send_message(message.from_user.id, 'Нажми сюда и мы составим формулу',
+                               reply_markup=ikb_menaiu)
+
 
 def register_handlers_client(dp: Dispatcher):
     dp.register_message_handler(send_welcome, commands=['start'])

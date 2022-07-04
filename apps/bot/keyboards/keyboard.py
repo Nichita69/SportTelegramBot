@@ -88,7 +88,8 @@ ikb_menaiu = InlineKeyboardMarkup(row_width=2,
                                   inline_keyboard=[
                                       [
                                           InlineKeyboardButton(text='Beancdfgh_Press',
-                                                               callback_data='Показать Тренировку')
+                                                               callback_data='Показать Тренировку'),
+                                          InlineKeyboardButton(text='назад', callback_data='◀️Назад'),
 
                                       ]
                                   ])
@@ -98,8 +99,8 @@ ikb_menu = InlineKeyboardMarkup(row_width=4,
                                     [
                                         InlineKeyboardButton(text='1)Bench_Press', callback_data='1)Bench_Press'),
                                         InlineKeyboardButton(text='2)Dumbell press', callback_data='2)Dumbell_Press'),
-                                        InlineKeyboardButton(text='3)Bars', callback_data='3)Bensdfch_Press'),
-                                        InlineKeyboardButton(text='4)Elastic', callback_data='4)Bfdench_Press'),
+                                        InlineKeyboardButton(text='3)Bars', callback_data='3)Bars'),
+                                        InlineKeyboardButton(text='4)Elastic', callback_data='4)Elastic'),
 
                                     ],
                                     [
@@ -111,15 +112,31 @@ ikb_menu = InlineKeyboardMarkup(row_width=4,
 fingers = InlineKeyboardMarkup(row_width=4,
                                inline_keyboard=[
                                    [
-                                       InlineKeyboardButton(text='1)Elastic', callback_data='1)Elastic'),
+                                       InlineKeyboardButton(text='1)Elastic', callback_data='1)Elasticc'),
                                        InlineKeyboardButton(text='2)dead lifting Finger',
                                                             callback_data='2)dead lifting Finger'),
                                        InlineKeyboardButton(text='3)Block Arm', callback_data='3)Block Arm'),
                                        InlineKeyboardButton(text='4)Twisting rod', callback_data='4)Twisting rod'),
-                                       InlineKeyboardButton(text='4)Luchevaia', callback_data='4)Luchevaia'),
+                                       InlineKeyboardButton(text='5)Luchevaia', callback_data='5)Luchevaia'),
                                    ],
                                    [
 
                                    ]
 
                                ])
+
+# fingers = InlineKeyboardMarkup(row_width=4,
+#                                inline_keyboard=[
+#                                    [
+#                                        InlineKeyboardButton(text='1)Elastic', callback_data='1)Elastic'),
+#                                        InlineKeyboardButton(text='2)dead lifting Finger',
+#                                                             callback_data='2)dead lifting Finger'),
+#                                        InlineKeyboardButton(text='3)Block Arm', callback_data='3)Block Arm'),
+#                                        InlineKeyboardButton(text='4)Twisting rod', callback_data='4)Twisting rod'),
+#                                        InlineKeyboardButton(text='4)Luchevaia', callback_data='4)Luchevaia'),
+#                                    ],
+#                                    [
+#
+#                                    ]
+#
+#                                ])
