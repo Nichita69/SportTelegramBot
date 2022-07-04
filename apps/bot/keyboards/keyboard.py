@@ -84,6 +84,15 @@ minipeka = InlineKeyboardMarkup(row_width=2)
 bthSomething = InlineKeyboardButton(text='Чото', switch_inline_query_current_chat='')
 minipeka.insert(bthSomething)
 
+ikb_menaiu = InlineKeyboardMarkup(row_width=2,
+                                  inline_keyboard=[
+                                      [
+                                          InlineKeyboardButton(text='Beancdfgh_Press',
+                                                               callback_data='Показать Тренировку')
+
+                                      ]
+                                  ])
+
 ikb_menu = InlineKeyboardMarkup(row_width=4,
                                 inline_keyboard=[
                                     [
@@ -92,8 +101,6 @@ ikb_menu = InlineKeyboardMarkup(row_width=4,
                                         InlineKeyboardButton(text='3)Bars', callback_data='3)Bensdfch_Press'),
                                         InlineKeyboardButton(text='4)Elastic', callback_data='4)Bfdench_Press'),
 
-
-
                                     ],
                                     [
 
@@ -101,10 +108,18 @@ ikb_menu = InlineKeyboardMarkup(row_width=4,
 
                                 ])
 
-ikb_menaiu = InlineKeyboardMarkup(row_width=2,
-                                  inline_keyboard=[
-                                      [
-                                          InlineKeyboardButton(text='Beancdfgh_Press', callback_data='Показать Тренировку')
+fingers = InlineKeyboardMarkup(row_width=4,
+                               inline_keyboard=[
+                                   [
+                                       InlineKeyboardButton(text='1)Elastic', callback_data='1)Elastic'),
+                                       InlineKeyboardButton(text='2)dead lifting Finger',
+                                                            callback_data='2)dead lifting Finger'),
+                                       InlineKeyboardButton(text='3)Block Arm', callback_data='3)Block Arm'),
+                                       InlineKeyboardButton(text='4)Twisting rod', callback_data='4)Twisting rod'),
+                                       InlineKeyboardButton(text='4)Luchevaia', callback_data='4)Luchevaia'),
+                                   ],
+                                   [
 
-                                      ]
-                                  ])
+                                   ]
+
+                               ])

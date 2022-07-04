@@ -13,10 +13,10 @@ from asgiref.sync import sync_to_async
 from unsync import unsync
 
 from .keyboards.keyboard import user_kb, mainMenu, user_go, user_goo, user_gooo, user_izmeniti, \
-    user_jim, dataa_kb, category, max_kb, minipeka, kb_user, ikb_menu, ikb_menaiu
+    user_jim, dataa_kb, category, max_kb, minipeka, kb_user, ikb_menu, ikb_menaiu, fingers
 from .. import exercise
-from ..exercise.models import Exercise
-from ..user.models import TelegramUser, MaximExersise
+from ..exercise.models import Exercise, MaximExersise
+from ..user.models import TelegramUser
 
 API_TOKEN = '5497853885:AAH7HFM2zgSsXMn_qVM-DBCyz_OLVXcTphs'
 logging.basicConfig(level=logging.INFO)
@@ -112,11 +112,8 @@ def get_inline_query(exercises, user):
         Button = InlineKeyboardButton(text='Добавить', callback_data=f'add-maximum-{exercise.id}')
         # Button = InlineKeyboardButton(text='Добавить', callback_data=f'1')
         max_kb.add(Button)
-        f = exercise.name
-        m = exercise.category.category
-        n =  MaximExersise.objects.order_by(maxim)
-
-        title = f'{f}-{n}-{m}'
+        exercise_maximum = getattr(exercise.maximexersise_set.filter(user=user).first(), 'maxim', None)
+        title = f'{exercise.name}-{exercise_maximum}-{exercise.category.category}'
         results.append(
             InlineQueryResultArticle(
                 id=exercise.id,
@@ -409,7 +406,7 @@ async def bot_message(message: types.Message, state: FSMContext):
                                reply_markup=ikb_menu)
 
     elif message.text == 'Thuesday':
-        await bot.send_message(message.from_user.id, 'are', reply_markup=user_go)
+        await bot.send_message(message.from_user.id, 'are', reply_markup=fingers)
 
     elif message.text == 'Wednesday':
         await bot.send_message(message.from_user.id, 'you', reply_markup=user_go)
