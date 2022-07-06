@@ -39,9 +39,6 @@ class MaximExersiseState(StatesGroup):
     grey = State()
 
 
-# ****************КЛИЕНТСКАЯ ЧАСТЬ************
-
-
 def get_user(user_id: int):
     return TelegramUser.objects.filter(chat_id=user_id).first()
 
