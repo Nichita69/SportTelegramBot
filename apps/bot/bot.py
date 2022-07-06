@@ -6,11 +6,8 @@ from aiogram import Bot, Dispatcher, types
 from aiogram.contrib.fsm_storage.memory import MemoryStorage
 from aiogram.dispatcher import FSMContext
 from aiogram.dispatcher.filters.state import StatesGroup, State
-from aiogram.types import (
-    ReplyKeyboardMarkup, KeyboardButton, InlineQuery, InputTextMessageContent, InlineQueryResultArticle,
-    InlineKeyboardMarkup, InlineKeyboardButton)
-
-from apps.bot.keyboards.keyboard import (mainMenu, minipeka, kb_user)
+from aiogram.types import InlineQuery
+from apps.bot.keyboards.keyboard import (main_kb, search_kb, week_days, user_redact, get_inline_keyboard)
 from apps.exercise.models import Exercise, MaximExercise
 from apps.user.models import TelegramUser
 from config.settings import API_TOKEN
@@ -64,12 +61,12 @@ async def send_welcome(message: types.Message):
         )
         await message.reply(
             f"Hello my Friend, {user.full_name}",
-            reply_markup=mainMenu
+            reply_markup=main_kb()
         )
     else:
         await message.reply(
             f"You are welcome, {bd_user.first_name} {bd_user.last_name}",
-            reply_markup=mainMenu
+            reply_markup=main_kb()
         )
 
 
@@ -101,28 +98,6 @@ def get_exercise_by_category(category_id):
 
 def get_all_exersise():
     return MaximExercise.objects.all()
-
-
-def get_inline_query(exercises, user):
-    results = []
-    for exercise in exercises:
-        max_kb = InlineKeyboardMarkup(row_width=1)
-        Button = InlineKeyboardButton(text='Добавить', callback_data=f'add-maximum-{exercise.id}')
-        # Button = InlineKeyboardButton(text='Добавить', callback_data=f'1')
-        max_kb.add(Button)
-        exercise_maximum = getattr(exercise.maximexercise_set.filter(user=user).last(), 'maxim', None)
-        n = exercise_maximum
-
-        title = f'{exercise.name}, {exercise.category.category}, {n}'
-        results.append(
-            InlineQueryResultArticle(
-                id=exercise.id,
-                title=title,
-                input_message_content=InputTextMessageContent(exercise.name),
-                reply_markup=max_kb
-            )
-        )
-    return results
 
 
 @dp.callback_query_handler(lambda c: c.data.startswith('add-maximum'))
@@ -170,7 +145,7 @@ async def home_work(message: types.Message):
     await bot.send_message(
         message.from_user.id,
         'Возвращение назад',
-        reply_markup=minipeka
+        reply_markup=search_kb()
     )
 
 
@@ -178,7 +153,7 @@ async def home_work(message: types.Message):
 async def my_dataa(inline_query: InlineQuery):
     user = await sync_to_async(get_user, thread_sensitive=True)(user_id=inline_query.from_user.id)
     exercises = await sync_to_async(get_all_exercise, thread_sensitive=True)()
-    results = list(await sync_to_async(get_inline_query, thread_sensitive=True)(exercises, user))
+    results = list(await sync_to_async(get_inline_keyboard, thread_sensitive=True)(exercises, user))
 
     await bot.answer_inline_query(inline_query_id=inline_query.id, results=results, cache_time=1)
 
@@ -231,23 +206,13 @@ async def my_data(message: types.Message):
         chat_id=message.from_user.id
     )
 
-    b1 = KeyboardButton(f'ИЗМЕНИТЬ ИМЯ💼 ({user.first_name})')
-    b2 = KeyboardButton(f'ИЗМЕНИТЬ ФАМИЛИЮ💼({user.last_name})')
-    b3 = KeyboardButton(f'ИЗМЕНИТЬ ВЕС💼({user.weight})')
-    b4 = KeyboardButton(f'ИЗМЕНИТЬ РОСТ💼({user.height})')
-
-    b6 = KeyboardButton('Назад⬅')
-
-    data_kb = ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True)
-    data_kb.add(b1, b2)
-    data_kb.add(b3, b4)
-    data_kb.add(b6)
-
     await bot.send_message(
         message.from_user.id,
-        f'First name: {user.first_name},\nLast name: {user.last_name},\nChat ID: {user.chat_id},\nWeight kg: {user.weight}'
-        f',\nHeight cm: {user.height}',
-        reply_markup=data_kb
+        f'First name: {user.first_name},\n'
+        f'Last name: {user.last_name},\n'
+        f'Weight kg: {user.weight},\n'
+        f'Height cm: {user.height}',
+        reply_markup=user_redact(user)
     )
 
 

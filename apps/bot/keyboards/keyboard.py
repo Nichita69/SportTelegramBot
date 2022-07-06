@@ -1,20 +1,40 @@
-from aiogram.types import ReplyKeyboardMarkup, KeyboardButton, ReplyKeyboardRemove, InlineKeyboardMarkup, \
-    InlineKeyboardButton
+from aiogram.types import (
+    ReplyKeyboardMarkup, KeyboardButton, InlineKeyboardMarkup, InlineKeyboardButton, InlineQueryResultArticle,
+    InputTextMessageContent)
 
 from apps import exercise
+from apps.exercise.models import Exercise
+from apps.user.models import TelegramUser
 
-b1 = KeyboardButton('Дни недели')
-b11 = KeyboardButton('Назад⬅')
 
-user_kb = ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True)
-user_kb.row(b1).add(b11)
+def main_kb() -> ReplyKeyboardMarkup:
+    b1 = KeyboardButton('МОИ ДАННЫЕ💪')
+    b2 = KeyboardButton('МОИ СИЛЛОВЫЕ💪')
+    b3 = KeyboardButton('ТРЕНИРОВКИ💪')
+    mainMenu = ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True).row(b1, b2).add(b3)
+    return mainMenu
 
-bthRandom = KeyboardButton('МОИ ДАННЫЕ💪')
 
-erf = KeyboardButton('МОИ СИЛЛОВЫЕ💪')
-hfh = KeyboardButton('ТРЕНИРОВКИ💪')
+def week_days() -> ReplyKeyboardMarkup:
+    b1 = KeyboardButton('Назад⬅')
+    b2 = KeyboardButton('Monday')
+    b3 = KeyboardButton('Tuesday')
+    b4 = KeyboardButton('Wednesday')
+    b5 = KeyboardButton('Thursday')
+    b6 = KeyboardButton('Friday')
+    b7 = KeyboardButton('Saturday')
+    b8 = KeyboardButton('Sunday')
+    weekMenu = ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True)
+    weekMenu.add(b2, b3, b4, b5, b6, b7, b8, b1)
+    return weekMenu
 
-mainMenu = ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True).row(bthRandom, erf).add(hfh)
+
+def user_redact(user: TelegramUser) -> ReplyKeyboardMarkup:
+    b1 = KeyboardButton(f'ИЗМЕНИТЬ ИМЯ💼 ({user.first_name})')
+    b2 = KeyboardButton(f'ИЗМЕНИТЬ ФАМИЛИЮ💼({user.last_name})')
+    b3 = KeyboardButton(f'ИЗМЕНИТЬ ВЕС💼({user.weight})')
+    b4 = KeyboardButton(f'ИЗМЕНИТЬ РОСТ💼({user.height})')
+    b5 = KeyboardButton('Назад⬅')
 
     dataMenu = ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True)
     dataMenu.add(b1, b2)
