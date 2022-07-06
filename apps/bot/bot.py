@@ -1,24 +1,20 @@
 import logging
-import random
-from uuid import uuid4
 
-import maxim
-from aiogram import Bot, Dispatcher, executor, types
+from unsync import unsync
+from asgiref.sync import sync_to_async
+from aiogram import Bot, Dispatcher, types
 from aiogram.contrib.fsm_storage.memory import MemoryStorage
 from aiogram.dispatcher import FSMContext
 from aiogram.dispatcher.filters.state import StatesGroup, State
-from aiogram.types import ReplyKeyboardMarkup, KeyboardButton, InlineQueryResult, InlineQuery, InputTextMessageContent, \
-    InlineQueryResultArticle, InlineKeyboardMarkup, InlineKeyboardButton
-from asgiref.sync import sync_to_async
-from unsync import unsync
+from aiogram.types import (
+    ReplyKeyboardMarkup, KeyboardButton, InlineQuery, InputTextMessageContent, InlineQueryResultArticle,
+    InlineKeyboardMarkup, InlineKeyboardButton)
 
-from .keyboards.keyboard import user_kb, mainMenu, user_go, user_goo, user_gooo, user_izmeniti, \
-    user_jim, dataa_kb, category, max_kb, minipeka, kb_user, ikb_menu, ikb_menaiu, fingers
-from .. import exercise
-from ..exercise.models import Exercise, MaximExersise
-from ..user.models import TelegramUser
+from apps.bot.keyboards.keyboard import (mainMenu, minipeka, kb_user)
+from apps.exercise.models import Exercise, MaximExercise
+from apps.user.models import TelegramUser
+from config.settings import API_TOKEN
 
-API_TOKEN = '5497853885:AAH7HFM2zgSsXMn_qVM-DBCyz_OLVXcTphs'
 logging.basicConfig(level=logging.INFO)
 storage = MemoryStorage()
 bot = Bot(token=API_TOKEN)
@@ -190,7 +186,6 @@ async def my_dataa(inline_query: InlineQuery):
     await bot.answer_inline_query(inline_query_id=inline_query.id, results=results, cache_time=1)
 
 
-################Моb eghf;ytybz #########################
 @dp.message_handler(lambda message: message.text and 'Теперь укажите максимуум в жиме лежа' in message.text)
 async def name_step(message: types.Message, state: FSMContext):
     await UserState.bench.set()
@@ -360,17 +355,6 @@ async def back_command(message: types.Message):
     )
 
 
-@dp.message_handler(lambda message: message.text and 'Тренировка' in message.text)
-async def name_step(message: types.Message, state: FSMContext):
-    await UserState.bench.set()
-    if message.answer(text='The first exersaise is bench press'):
-        await bot.send_message(message.from_user.id, text='https://www.borntoworkout.com/wp-content/uploads/2017/11'
-                                                          '/Incline-Bench-Press.jpg')
-    if message.answer(text='https://www.borntoworkout.com/wp-content/uploads/2017/11/Incline-Bench-Press.jpg'):
-        await bot.send_message(message.from_user.id, 'Теперь укажите свой максимум на раз в жиме лежа',
-                               reply_markup=mainMenu)
-
-
 @unsync
 def update_bench_press(message):
     user = TelegramUser.objects.get(chat_id=message.from_user.id)
@@ -389,6 +373,42 @@ async def put_formula(message, state):
 async def names_steps_with_markdапавкown(message: types.Message, state: FSMContext):
     await message.answer(f"{'<b>'}УКАЗЫВАЙТЕ ВЕРНЫЙ ВЕС,РОСТ И МАКСИМУМ В УПРАЖНЕНИЯХ ТАК КАК ПО ЭТИМ ДАННЫМ "
                          f"СОСТАВЛЯЕТСЯ ТРЕНИРОВКА {'</b>'}", parse_mode='HTML', reply_markup=kb_user)
+
+
+def get_exercise_keyboard(category_id):
+    exercises = Exercise.objects.filter(category_id=category_id)
+    keyboard = types.InlineKeyboardMarkup()
+    for exercise in exercises:
+        keyboard.add(types.InlineKeyboardButton(text=exercise.name, callback_data=f'work-day-{exercise.id}'))
+    return keyboard
+
+
+def count_exercice_trenirovka(chat_id, exercise_id):
+    user = TelegramUser.objects.get(chat_id=chat_id)
+    maxim = user.maximexercise_set.filter(exercise_id=exercise_id).last()
+    if not maxim:
+        return 0, ""
+    exercise = maxim.exercise
+    url = exercise.url
+    if form := exercise.formula:
+        return eval(form.format(maxim.maxim)), url
+    return 0, url
+
+
+@dp.callback_query_handler(lambda c: c.data.startswith('work-day'), )
+async def monday_exercise(call: types.CallbackQuery):
+    exercise_id = call.data.split('-')[-1]
+
+    number, url = await sync_to_async(count_exercice_trenirovka)(call.from_user.id, exercise_id)
+    await bot.send_message(
+        call.from_user.id,
+        f'You must do 10 reps for four sets. {number}',
+    )
+    await bot.send_message(
+        call.from_user.id,
+        f'{url}',
+        reply_markup=kb_user
+    )
 
 
 @dp.message_handler()
@@ -419,18 +439,11 @@ async def bot_message(message: types.Message):
         )
 
 
-# @dp.callback_query_handler(lambda c: c.data.startswith('Показать Тренировку'))
-# async def start_maxim(message: types.Message, state: FSMContext, exercises, user):
-#     for exercise in exercises:
-#         exercise_maximum = getattr(exercise.maximexersise_set.filter(user=user).last(), 'maxim', None)
-#     await bot.send_message(
-#         message.from_user.id,
-#         'exercise_maximum',
-#         reply_markup=mainMenu
-#     )
+@dp.message_handler(lambda message: message.text and 'Дни недели' in message.text)
+async def days_of_week(message: types.Message):
+    await message.answer(f"{'<b>'}УКАЗЫВАЙТЕ ВЕРНЫЙ ВЕС,РОСТ И МАКСИМУМ В УПРАЖНЕНИЯХ ТАК КАК ПО ЭТИМ ДАННЫМ "
+                         f"СОСТАВЛЯЕТСЯ ТРЕНИРОВКА {'</b>'}", parse_mode='HTML', reply_markup=kb_user)
 
-
-#                    CHEST AND TRICEPS
 
 @dp.callback_query_handler(lambda c: c.data.startswith('◀️Назад'))
 async def go_back(message: types.Message):
@@ -439,124 +452,6 @@ async def go_back(message: types.Message):
         'Возвращение назад',
         reply_markup=mainMenu
     )
-
-
-@dp.callback_query_handler(lambda c: c.data.startswith('1)Bench_Press'))
-async def start_maxim(message: types.Message, state: FSMContext):
-    await bot.send_message(message.from_user.id, 'Первое упражнение это жим лежа'
-                           )
-    if message.answer(text='Теперь укажите свой максимум на раз в жиме лежа'):
-        await bot.send_message(message.from_user.id,
-                               text='https://bodybuilding-and-fitness.ru/wp-content/webp-express/webp-images/doc-root/wp-content/uploads/2020/07/zhim-lezha.jpg.webp')
-    if message.answer(
-            text='https://bodybuilding-and-fitness.ru/wp-content/webp-express/webp-images/doc-root/wp-content/uploads/2020/07/zhim-lezha.jpg.webp'):
-        await bot.send_message(message.from_user.id, 'Теперь укажите свой максимум на раз в жиме лежа',
-                               reply_markup=ikb_menaiu)
-
-
-@dp.callback_query_handler(lambda c: c.data.startswith('2)Dumbell_Press'))
-async def start_sdds(message: types.Message, state: FSMContext):
-    await bot.send_message(message.from_user.id, 'Второе упражнение жим гантелей'
-                           )
-    if message.answer(text='Теперь укажите свой максимум на раз в жиме лежа'):
-        await bot.send_message(message.from_user.id,
-                               text='https://recordregion.ru/wp-content/uploads/8/1/4/814c2feb603bd2370584c7d9f12b8eec.jpeg')
-    if message.answer(
-            text='https://recordregion.ru/wp-content/uploads/8/1/4/814c2feb603bd2370584c7d9f12b8eec.jpeg'):
-        await bot.send_message(message.from_user.id, 'Нажми сюда и мы составим формулу',
-                               reply_markup=ikb_menaiu)
-
-
-@dp.callback_query_handler(lambda c: c.data.startswith('3)Bars'))
-async def start_sddsds(message: types.Message, state: FSMContext):
-    await bot.send_message(message.from_user.id, 'Третье упражнение брусья с доп весом'
-                           )
-    if message.answer(text='Теперь укажите свой максимум на раз в жиме лежа'):
-        await bot.send_message(message.from_user.id,
-                               text='https://alfagym.ru/wp-content/uploads/5/f/7/5f799e907140eff78af9aceda73b2e7f.jpeg')
-    if message.answer(text='https://alfagym.ru/wp-content/uploads/5/f/7/5f799e907140eff78af9aceda73b2e7f.jpeg'):
-        await bot.send_message(message.from_user.id, 'Нажми сюда и мы составим формулу',
-                               reply_markup=ikb_menaiu)
-
-
-@dp.callback_query_handler(lambda c: c.data.startswith('4)Elastic'))
-async def start_sddds(message: types.Message, state: FSMContext):
-    await bot.send_message(message.from_user.id, 'Третье упражнение брусья с доп весом'
-                           )
-    if message.answer(text='Теперь укажите свой максимум на раз в жиме лежа'):
-        await bot.send_message(message.from_user.id,
-                               text='https://bombatelo.ru/wp-content/uploads/2017/08/Programma-trenirovki-grudi-FST-7'
-                                    '-5--768x646.jpg')
-    if message.answer(
-            text='https://bombatelo.ru/wp-content/uploads/2017/08/Programma-trenirovki-grudi-FST-7-5--768x646.jpg'):
-        await bot.send_message(message.from_user.id, 'Нажми сюда и мы составим формулу',
-                               reply_markup=ikb_menaiu)
-
-
-#          Brush and Fingers
-@dp.callback_query_handler(lambda c: c.data.startswith('1)Elasticc'))
-async def start_sddds(message: types.Message, state: FSMContext):
-    await bot.send_message(message.from_user.id, 'Разминка Кисти и пальцев с ризиной'
-                           )
-    if message.answer(text='В этом упражнении нету максимума '):
-        await bot.send_message(message.from_user.id,
-                               text='https://tutknow.ru/uploads/posts/2016-05/1462470854_princip-vzaimosvyazi-muskulov.jpg')
-    if message.answer(
-            text='https://tutknow.ru/uploads/posts/2016-05/1462470854_princip-vzaimosvyazi-muskulov.jpg'):
-        await bot.send_message(message.from_user.id, 'Нажми сюда и мы составим формулу',
-                               reply_markup=ikb_menaiu)
-
-
-@dp.callback_query_handler(lambda c: c.data.startswith('2)dead lifting Finger'))
-async def start_sddds(message: types.Message, state: FSMContext):
-    await bot.send_message(message.from_user.id, 'Становая тяга пальцами'
-                           )
-    if message.answer(text='В этом упражнении нету максимума '):
-        await bot.send_message(message.from_user.id,
-                               text='https://i.pinimg.com/originals/10/f1/e8/10f1e889c471a1b967b221bb6b4e3ec8.jpg')
-    if message.answer(
-            text='https://i.pinimg.com/originals/10/f1/e8/10f1e889c471a1b967b221bb6b4e3ec8.jpg'):
-        await bot.send_message(message.from_user.id, 'Нажми сюда и мы составим формулу',
-                               reply_markup=ikb_menaiu)
-
-
-@dp.callback_query_handler(lambda c: c.data.startswith('3)Block Arm'))
-async def start_sddds(message: types.Message, state: FSMContext):
-    await bot.send_message(message.from_user.id, 'Качаем Кисти на блоке'
-                           )
-    if message.answer(text='В этом упражнении нету максимума '):
-        await bot.send_message(message.from_user.id,
-                               text='https://ru.armpower.net/img/o/8bfa35_dsc-8989net.jpg')
-    if message.answer(
-            text='https://ru.armpower.net/img/o/8bfa35_dsc-8989net.jpg'):
-        await bot.send_message(message.from_user.id, 'Нажми сюда и мы составим формулу',
-                               reply_markup=ikb_menaiu)
-
-
-@dp.callback_query_handler(lambda c: c.data.startswith('4)Twisting rod'))
-async def start_sddds(message: types.Message, state: FSMContext):
-    await bot.send_message(message.from_user.id, 'Скручивания штанги на кисть'
-                           )
-    if message.answer(text='В этом упражнерарапрпар нету максимума '):
-        await bot.send_message(message.from_user.id,
-                               text='https://alfagym.ru/wp-content/uploads/7/8/c/78cc3024e79fd662e22a519dba38fe1e.jpeg')
-    if message.answer(
-            text='https://alfagym.ru/wp-content/uploads/7/8/c/78cc3024e79fd662e22a519dba38fe1e.jpeg'):
-        await bot.send_message(message.from_user.id, 'Нажми сюда и мы составим формулу',
-                               reply_markup=ikb_menaiu)
-
-
-@dp.callback_query_handler(lambda c: c.data.startswith('5)Luchevaia'))
-async def start_sddds(message: types.Message, state: FSMContext):
-    await bot.send_message(message.from_user.id, 'Упражнение для плечелучевой'
-                           )
-    if message.answer(text='В этом упражнении нету максимума '):
-        await bot.send_message(message.from_user.id,
-                               text='https://avatars.mds.yandex.net/get-zen_doc/3517023/pub_5f29786a9bd10957f02e6385_5f2978a1b1ec2205d8bebdff/scale_1200')
-    if message.answer(
-            text='https://avatars.mds.yandex.net/get-zen_doc/3517023/pub_5f29786a9bd10957f02e6385_5f2978a1b1ec2205d8bebdff/scale_1200'):
-        await bot.send_message(message.from_user.id, 'Нажми сюда и мы составим формулу',
-                               reply_markup=ikb_menaiu)
 
 
 def register_handlers_client(dp: Dispatcher):

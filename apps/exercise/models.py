@@ -13,11 +13,12 @@ class Exercise(models.Model):
     name = models.CharField(max_length=150, blank=True, null=True)
     category = models.ForeignKey(Category, on_delete=models.SET_NULL, null=True)
     formula = models.CharField(max_length=150, blank=True, null=True)
+    url = models.URLField(max_length=150, blank=True, null=True)
 
 
 class MaximExercise(models.Model):
-    created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
+    created_at = models.DateTimeField(auto_now_add=True, null=True)
+    updated_at = models.DateTimeField(auto_now=True, null=True)
     user = models.ForeignKey(to=TelegramUser, null=False, on_delete=models.CASCADE)
     exercise = models.ForeignKey(to=Exercise, null=False, on_delete=models.CASCADE)
     maxim = models.FloatField(null=False, default=150)

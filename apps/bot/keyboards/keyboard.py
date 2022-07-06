@@ -17,7 +17,7 @@ hfh = KeyboardButton('ТРЕНИРОВКИ💪')
 mainMenu = ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True).row(bthRandom, erf).add(hfh)
 
 b15 = KeyboardButton('Monday')
-b16 = KeyboardButton('Thuesday')
+b16 = KeyboardButton('Tuesday')
 b17 = KeyboardButton('Wednesday')
 b18 = KeyboardButton('Thursday')
 b19 = KeyboardButton('Friday')
