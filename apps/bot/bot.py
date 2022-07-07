@@ -1,4 +1,5 @@
 import logging
+from datetime import datetime
 
 from unsync import unsync
 from asgiref.sync import sync_to_async
@@ -60,12 +61,12 @@ async def send_welcome(message: types.Message):
             last_name=user.last_name
         )
         await message.reply(
-            f"Hello my Friend, {user.full_name}",
+            f"Hello my Friend,Для начала чтобы бот правильно  работал, укажи свои данные и силовые ! {user.full_name}",
             reply_markup=main_kb()
         )
     else:
         await message.reply(
-            f"You are welcome, {bd_user.first_name} {bd_user.last_name}",
+            f"You are welcome,Для начала чтобы бот правильно  работал, укажи свои данные и силовые !{bd_user.first_name} {bd_user.last_name}",
             reply_markup=main_kb()
         )
 
@@ -112,7 +113,7 @@ async def start_maxim(call: types.CallbackQuery):
     dp.storage.data[str(call.from_user.id)][str(call.from_user.id)]['data']['exercise'] = call.data.split('-')[-1]
     await bot.send_message(
         call.from_user.id,
-        'Введите максимальную нагрузку:',
+        'ВведитеR ваш максимум на раз:',
     )
 
 
@@ -140,13 +141,39 @@ async def process_age(message: types.Message, state: FSMContext):
     await message.answer(text='Посмотрите свои силовые ', reply_markup=main_kb())
 
 
+def get_my_maxims(maxim_exercises):
+    text = str()
+
+    for exercise in maxim_exercises:
+        text += f'{exercise.exercise.name} - {exercise.maxim}\n'
+    return text
+
+
 @dp.message_handler(lambda message: message.text and 'МОИ СИЛЛОВЫЕ💪' in message.text)
 async def home_work(message: types.Message):
-    await bot.send_message(
-        message.from_user.id,
-        'Возвращение назад',
-        reply_markup=search_kb()
+    user = await sync_to_async(
+        TelegramUser.objects.get,
+        thread_sensitive=True
+    )(
+        chat_id=message.from_user.id
     )
+
+    maxim_exercises = user.maximexercise_set.all()
+
+    text = await sync_to_async(get_my_maxims)(maxim_exercises)
+
+    if text:
+        await bot.send_message(
+            message.from_user.id,
+            text,
+            reply_markup=search_kb()
+        )
+    else:
+        await bot.send_message(
+            message.from_user.id,
+            'Вы пока не добавили ни одного максмума!',
+            reply_markup=search_kb()
+        )
 
 
 @dp.inline_handler()
@@ -156,17 +183,6 @@ async def my_dataa(inline_query: InlineQuery):
     results = list(await sync_to_async(get_inline_keyboard, thread_sensitive=True)(exercises, user))
 
     await bot.answer_inline_query(inline_query_id=inline_query.id, results=results, cache_time=1)
-
-
-@dp.message_handler(lambda message: message.text and 'Теперь укажите максимуум в жиме лежа' in message.text)
-async def name_step(message: types.Message, state: FSMContext):
-    await UserState.bench.set()
-    if message.answer(text='The first exersaise is bench press'):
-        await bot.send_message(message.from_user.id, text='https://www.borntoworkout.com/wp-content/uploads/2017/11'
-                                                          '/Incline-Bench-Press.jpg')
-    if message.answer(text='https://www.borntoworkout.com/wp-content/uploads/2017/11/Incline-Bench-Press.jpg'):
-        await bot.send_message(message.from_user.id, 'Теперь укажите свой максимум на раз в жиме лежа',
-                               reply_markup=main_kb())
 
 
 @unsync
@@ -194,7 +210,7 @@ def update_dumbbell_presss(message):
 async def def_dumbbell(message, state):
     update_dumbbell_presss(message)
     await state.finish()
-    await message.answer('Ваше Имя было успешно обновлjено!!!!!!!')
+    await message.answer('Ваше Имя было успешно обновлено!!!!!!!')
 
 
 @dp.message_handler(lambda message: message.text and 'МОИ ДАННЫЕ💪' in message.text)
@@ -208,10 +224,10 @@ async def my_data(message: types.Message):
 
     await bot.send_message(
         message.from_user.id,
-        f'First name: {user.first_name},\n'
-        f'Last name: {user.last_name},\n'
-        f'Weight kg: {user.weight},\n'
-        f'Height cm: {user.height}',
+        f'Имя: {user.first_name},\n'
+        f'Фамилия: {user.last_name},\n'
+        f'Вес : {user.weight} кг,\n'
+        f'Рост: {user.height} см',
         reply_markup=user_redact(user)
     )
 
@@ -230,7 +246,7 @@ def update_first_name(message):
 
 
 @dp.message_handler(state=UserState.name)
-async def def_name(message, state):
+async def def_change_name(message, state):
     if not message.text.isdigit():
         update_first_name(message)
         await state.finish()
@@ -253,7 +269,7 @@ def update_height(message):
 
 
 @dp.message_handler(state=UserState.heightt)
-async def height_height(message, state):
+async def change_height_in_databaze(message, state):
     if message.text.isdigit():
         update_height(message)
         await state.finish()
@@ -263,7 +279,7 @@ async def height_height(message, state):
 
 
 @dp.message_handler(lambda message: message.text and 'ИЗМЕНИТЬ ВЕС💼' in message.text)
-async def weight_go(message: types.Message, state: FSMContext):
+async def weight_change(message: types.Message, state: FSMContext):
     await UserState.weightt.set()
     await message.answer(text='Укажите ваш вес', reply_markup=main_kb())
 
@@ -276,7 +292,7 @@ def update_weight(message):
 
 
 @dp.message_handler(state=UserState.weightt)
-async def process_weighting(message, state):
+async def change_your_name_in_baza_danih(message, state):
     if message.text.isdigit():
         update_weight(message)
         await state.finish()
@@ -286,7 +302,7 @@ async def process_weighting(message, state):
 
 
 @dp.message_handler(lambda message: message.text and 'ИЗМЕНИТЬ ФАМИЛИЮ💼' in message.text)
-async def names_steps_with_markdown(message: types.Message, state: FSMContext):
+async def your_last_name(message: types.Message, state: FSMContext):
     await UserState.family.set()
     await message.answer(f"{'<b>'}Ведите вашу фамилию {'</b>'}", parse_mode='HTML', reply_markup=main_kb())
 
@@ -299,8 +315,8 @@ def update_last_name(message):
 
 
 @dp.message_handler(state=UserState.family)
-async def proccesss_name(message, state):
-    if not message.text.isdigit:
+async def change_the_last_name(message, state):
+    if not message.text.isdigit():
         update_last_name(message)
         await state.finish()
         await message.answer('Ваша фамилия была успешно обновлена!!!!!!!', reply_markup=main_kb())
@@ -317,24 +333,13 @@ async def back_command(message: types.Message):
     )
 
 
-@unsync
-def update_bench_press(message):
-    user = TelegramUser.objects.get(chat_id=message.from_user.id)
-    user.bench_presss = message.text
-    user.save()
-
-
-@dp.message_handler(state=UserState.bench)
-async def put_formula(message, state):
-    update_bench_press(message)
-    await state.finish()
-    await message.answer(text='Сейчас составим для вас формулу !!!!!!!', reply_markup=main_kb())
-
-
 @dp.message_handler(lambda message: message.text and 'ТРЕНИРОВКИ💪' in message.text)
-async def names_steps_with_markdапавкown(message: types.Message, state: FSMContext):
-    await message.answer(f"{'<b>'}УКАЗЫВАЙТЕ ВЕРНЫЙ ВЕС,РОСТ И МАКСИМУМ В УПРАЖНЕНИЯХ ТАК КАК ПО ЭТИМ ДАННЫМ "
-                         f"СОСТАВЛЯЕТСЯ ТРЕНИРОВКА {'</b>'}", parse_mode='HTML', reply_markup=week_days())
+async def list_of_days(message: types.Message, state: FSMContext):
+    current_dt = datetime.now().strftime("%y.%m.%d %H:%M:%S")
+    c_date, c_time = current_dt.split()
+    msg = f"Текущая дата: {c_date}\nТекущее время: {c_time}"
+    user = message.from_user.id
+    await bot.send_message(user, msg, reply_markup=week_days())
 
 
 def get_exercise_keyboard(category_id):
@@ -349,7 +354,7 @@ def count_exercice_trenirovka(chat_id, exercise_id):
     user = TelegramUser.objects.get(chat_id=chat_id)
     maxim = user.maximexercise_set.filter(exercise_id=exercise_id).last()
     if not maxim:
-        return 0, ""
+        return 0, ''
     exercise = maxim.exercise
     url = exercise.url
     if form := exercise.formula:
@@ -358,19 +363,26 @@ def count_exercice_trenirovka(chat_id, exercise_id):
 
 
 @dp.callback_query_handler(lambda c: c.data.startswith('work-day'), )
-async def monday_exercise(call: types.CallbackQuery):
+async def your_trenirovka(call: types.CallbackQuery):
     exercise_id = call.data.split('-')[-1]
 
     number, url = await sync_to_async(count_exercice_trenirovka)(call.from_user.id, exercise_id)
-    await bot.send_message(
-        call.from_user.id,
-        f'You must do 10 reps for four sets. {number}',
-    )
-    await bot.send_message(
-        call.from_user.id,
-        f'{url}',
-        reply_markup=week_days()
-    )
+    if number:
+        await bot.send_message(
+            call.from_user.id,
+            f'Ты должен сделать 4 подхода по 10 раз с этим весом =     {number}',
+        )
+        await bot.send_message(
+            call.from_user.id,
+            f'{url}',
+            reply_markup=week_days()
+        )
+    else:
+        await bot.send_message(
+            call.from_user.id,
+            f'Сначала добавьте свои максимумы!',
+            reply_markup=search_kb()
+        )
 
 
 @dp.message_handler()
@@ -378,33 +390,27 @@ async def bot_message(message: types.Message):
     # Depend on message.text we can send different messages using match
     category_id = 0
     match message.text:
-        case 'Monday':
+        case 'Понедельник🏆':
             category_id = 1
-        case 'Tuesday':
+        case 'Вторник🏆':
             category_id = 2
-        case 'Wednesday':
+        case 'Среда🏆':
             category_id = 3
-        case 'Thursday':
+        case 'Четверг🏆':
             category_id = 4
-        case 'Friday':
+        case 'Пятница🏆':
             category_id = 5
-        case 'Saturday':
+        case 'Суббота🏆':
             category_id = 1
-        case 'Sunday':
+        case 'Воскресенье🏖':
             category_id = 2
     if category_id != 0:
         kb = await sync_to_async(get_exercise_keyboard)(category_id)
         await bot.send_message(
             chat_id=message.from_user.id,
-            text=f"Let's get exercises!",
+            text=f"Давай приступим к упражнениям",
             reply_markup=kb
         )
-
-
-@dp.message_handler(lambda message: message.text and 'Дни недели' in message.text)
-async def days_of_week(message: types.Message):
-    await message.answer(f"{'<b>'}УКАЗЫВАЙТЕ ВЕРНЫЙ ВЕС,РОСТ И МАКСИМУМ В УПРАЖНЕНИЯХ ТАК КАК ПО ЭТИМ ДАННЫМ "
-                         f"СОСТАВЛЯЕТСЯ ТРЕНИРОВКА {'</b>'}", parse_mode='HTML', reply_markup=week_days())
 
 
 @dp.callback_query_handler(lambda c: c.data.startswith('◀️Назад'))

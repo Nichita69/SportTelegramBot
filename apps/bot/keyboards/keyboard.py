@@ -11,19 +11,19 @@ def main_kb() -> ReplyKeyboardMarkup:
     b1 = KeyboardButton('МОИ ДАННЫЕ💪')
     b2 = KeyboardButton('МОИ СИЛЛОВЫЕ💪')
     b3 = KeyboardButton('ТРЕНИРОВКИ💪')
-    mainMenu = ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True).row(b1, b2).add(b3)
+    mainMenu = ReplyKeyboardMarkup(resize_keyboard=True).row(b1, b2).add(b3)
     return mainMenu
 
 
 def week_days() -> ReplyKeyboardMarkup:
     b1 = KeyboardButton('Назад⬅')
-    b2 = KeyboardButton('Monday')
-    b3 = KeyboardButton('Tuesday')
-    b4 = KeyboardButton('Wednesday')
-    b5 = KeyboardButton('Thursday')
-    b6 = KeyboardButton('Friday')
-    b7 = KeyboardButton('Saturday')
-    b8 = KeyboardButton('Sunday')
+    b2 = KeyboardButton('Понедельник🏆')
+    b3 = KeyboardButton('Вторник🏆')
+    b4 = KeyboardButton('Среда🏆')
+    b5 = KeyboardButton('Четверг🏆')
+    b6 = KeyboardButton('Пятница🏆')
+    b7 = KeyboardButton('Суботта🏆')
+    b8 = KeyboardButton('Воскресенье🏖')
     weekMenu = ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True)
     weekMenu.add(b2, b3, b4, b5, b6, b7, b8, b1)
     return weekMenu
