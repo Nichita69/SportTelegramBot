@@ -9,3 +9,7 @@ class TelegramUser(models.Model):
     chat_id = models.CharField(max_length=255, unique=True)
     weight = models.FloatField(null=False, default=50, max_length=3)
     height = models.FloatField(null=False, default=70)
+
+    @property
+    def full_name(self):
+        return f'{self.first_name} {self.last_name}'

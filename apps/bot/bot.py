@@ -37,13 +37,10 @@ class UserState(StatesGroup):
 async def send_welcome(message: types.Message):
     user = message.from_user
 
-    bd_user = await sync_to_async(get_user, thread_sensitive=True)(user_id=message.from_user.id)
+    bd_user = await sync_to_async(func=get_user, thread_sensitive=True)(user_id=message.from_user.id)
 
     if not bd_user:
-        await sync_to_async(
-            TelegramUser.objects.create,
-            thread_sensitive=True
-        )(
+        await sync_to_async(TelegramUser.objects.create, thread_sensitive=True)(
             chat_id=user.id,
             first_name=user.first_name,
             last_name=user.last_name
@@ -132,7 +129,7 @@ async def home_work(message: types.Message):
 @dp.inline_handler()
 async def my_dataa(inline_query: InlineQuery):
     user = await sync_to_async(get_user, thread_sensitive=True)(user_id=inline_query.from_user.id)
-    exercises = await sync_to_async(get_all_exercise, thread_sensitive=True)()
+    exercises = await sync_to_async(Exercise.objects.all, thread_sensitive=True)()
     results = list(await sync_to_async(get_inline_keyboard, thread_sensitive=True)(exercises, user))
 
     await bot.answer_inline_query(inline_query_id=inline_query.id, results=results, cache_time=1)
@@ -140,18 +137,13 @@ async def my_dataa(inline_query: InlineQuery):
 
 @dp.message_handler(lambda message: message.text and 'МОИ ДАННЫЕ💪' in message.text)
 async def my_data(message: types.Message):
-    user = await sync_to_async(
-        TelegramUser.objects.get,
-        thread_sensitive=True
-    )(
-        chat_id=message.from_user.id
-    )
+    user = await sync_to_async(TelegramUser.objects.get, thread_sensitive=True)(chat_id=message.from_user.id)
 
     await bot.send_message(
         message.from_user.id,
         f'Имя: {user.first_name},\n'
         f'Фамилия: {user.last_name},\n'
-        f'Вес : {user.weight} кг,\n'
+        f'Вес: {user.weight} кг,\n'
         f'Рост: {user.height} см',
         reply_markup=user_redact(user)
     )
