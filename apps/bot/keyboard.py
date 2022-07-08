@@ -1,9 +1,11 @@
+from aiogram import types
 from aiogram.types import (
     ReplyKeyboardMarkup, KeyboardButton, InlineKeyboardMarkup, InlineKeyboardButton, InlineQueryResultArticle,
     InputTextMessageContent)
+from unsync import unsync
 
 from apps import exercise
-from apps.exercise.models import Exercise
+from apps.exercise.models import Exercise, MaximExercise
 from apps.user.models import TelegramUser
 
 
@@ -69,3 +71,26 @@ def get_inline_keyboard(exercises: list[Exercise], user: TelegramUser) -> list[I
             )
         )
     return results
+
+
+def get_exercise_keyboard(category_id):
+    exercises = Exercise.objects.filter(category_id=category_id)
+    keyboard = types.InlineKeyboardMarkup()
+    for exercise in exercises:
+        keyboard.add(types.InlineKeyboardButton(text=exercise.name, callback_data=f'work-day-{exercise.id}'))
+    return keyboard
+
+
+def save_maxim(user_id: int, exercise_id: int, maxim: int):
+    obj, created = MaximExercise.objects.update_or_create(
+        user_id=user_id,
+        exercise_id=exercise_id,
+        defaults={'maxim': maxim},
+    )
+    return obj
+
+
+def update_last_name(message):
+    user = TelegramUser.objects.get(chat_id=message.from_user.id)
+    user.last_name = message.text
+    user.save()

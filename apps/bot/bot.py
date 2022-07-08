@@ -1,15 +1,21 @@
 import logging
 from datetime import datetime
+from unittest.mock import call
 
-from unsync import unsync
 from asgiref.sync import sync_to_async
 from aiogram import Bot, Dispatcher, types
 from aiogram.contrib.fsm_storage.memory import MemoryStorage
 from aiogram.dispatcher import FSMContext
 from aiogram.dispatcher.filters.state import StatesGroup, State
 from aiogram.types import InlineQuery
-from apps.bot.keyboards.keyboard import (main_kb, search_kb, week_days, user_redact, get_inline_keyboard)
-from apps.exercise.models import Exercise, MaximExercise
+from unsync import unsync
+
+from apps.bot.helpers import (
+    get_user, count_exercice_trenirovka, get_my_maxims, update_first_name, update_height, update_weight)
+from apps.bot.keyboard import (
+    main_kb, search_kb, week_days, user_redact, get_inline_keyboard, get_exercise_keyboard, save_maxim,
+    update_last_name)
+from apps.exercise.models import Exercise
 from apps.user.models import TelegramUser
 from config.settings import API_TOKEN
 
@@ -20,29 +26,11 @@ dp = Dispatcher(bot, storage=storage)
 
 
 class UserState(StatesGroup):
-    name = State()
-    family = State()
-    weightt = State()
-    heightt = State()
-    mk_weight = State()
-    bench = State()
-    dubbell = State()
-    all_exersise = State()
+    first_name = State()
+    last_name = State()
+    weight = State()
+    height = State()
     add_maxim = State()
-    maxxim = State()
-    work_day = State()
-
-
-class MaximExersiseState(StatesGroup):
-    grey = State()
-
-
-def get_user(user_id: int):
-    return TelegramUser.objects.filter(chat_id=user_id).first()
-
-
-def get_exercise(exercise_id: int):
-    return MaximExercise.objects.filter(user_id=exercise_id).first()
 
 
 @dp.message_handler(commands=['start'])
@@ -61,12 +49,13 @@ async def send_welcome(message: types.Message):
             last_name=user.last_name
         )
         await message.reply(
-            f"Hello my Friend,Для начала чтобы бот правильно  работал, укажи свои данные и силовые ! {user.full_name}",
+            f"Привет мой друг,Для начала чтобы бот правильно  работал, укажи свои данные и силовые ! {user.full_name}",
             reply_markup=main_kb()
         )
     else:
         await message.reply(
-            f"You are welcome,Для начала чтобы бот правильно  работал, укажи свои данные и силовые !{bd_user.first_name} {bd_user.last_name}",
+            f"Давно не виделись,\n"
+            f"Для начала чтобы бот правильно  работал, {bd_user.full_name} укажи свои данные и силовые !",
             reply_markup=main_kb()
         )
 
@@ -80,25 +69,6 @@ async def command_help(message: types.Message):
         f"росту и весу ",
         reply_markup=main_kb()
     )
-
-
-@unsync
-def update_height(message):
-    user = TelegramUser.objects.get(chat_id=message.from_exercise.id)
-    user.height = message.text
-    user.save()
-
-
-def get_all_exercise():
-    return Exercise.objects.all()
-
-
-def get_exercise_by_category(category_id):
-    return Exercise.objects.filter(category_id=category_id)
-
-
-def get_all_exersise():
-    return MaximExercise.objects.all()
 
 
 @dp.callback_query_handler(lambda c: c.data.startswith('add-maximum'))
@@ -117,15 +87,6 @@ async def start_maxim(call: types.CallbackQuery):
     )
 
 
-def save_maxim(user_id: int, exercise_id: int, maxim: int):
-    obj, created = MaximExercise.objects.update_or_create(
-        user_id=user_id,
-        exercise_id=exercise_id,
-        defaults={'maxim': maxim},
-    )
-    return obj
-
-
 @dp.message_handler(lambda message: message.text.isdigit(), state=UserState.add_maxim)
 async def process_age(message: types.Message, state: FSMContext):
     exercise_id = int(state.storage.data[str(message.from_user.id)][str(message.from_user.id)]['data']['exercise'])
@@ -139,14 +100,6 @@ async def process_age(message: types.Message, state: FSMContext):
 
     await state.finish()
     await message.answer(text='Посмотрите свои силовые ', reply_markup=main_kb())
-
-
-def get_my_maxims(maxim_exercises):
-    text = str()
-
-    for exercise in maxim_exercises:
-        text += f'{exercise.exercise.name} - {exercise.maxim}\n'
-    return text
 
 
 @dp.message_handler(lambda message: message.text and 'МОИ СИЛЛОВЫЕ💪' in message.text)
@@ -185,34 +138,6 @@ async def my_dataa(inline_query: InlineQuery):
     await bot.answer_inline_query(inline_query_id=inline_query.id, results=results, cache_time=1)
 
 
-@unsync
-def update_bench_press(message):
-    user = TelegramUser.objects.get(chat_id=message.from_user.id)
-    user.bench_presss = message.text
-    user.save()
-
-
-@dp.message_handler(state=UserState.bench)
-async def put_formula(message, state):
-    update_bench_press(message)
-    await state.finish()
-    await message.answer(text='Отлично сейчас сделаем вам тренировку')
-
-
-@unsync
-def update_dumbbell_presss(message):
-    user = TelegramUser.objects.get(chat_id=message.from_user.id)
-    user.dumbell_press = message.text
-    user.save()
-
-
-@dp.message_handler(state=UserState.dubbell)
-async def def_dumbbell(message, state):
-    update_dumbbell_presss(message)
-    await state.finish()
-    await message.answer('Ваше Имя было успешно обновлено!!!!!!!')
-
-
 @dp.message_handler(lambda message: message.text and 'МОИ ДАННЫЕ💪' in message.text)
 async def my_data(message: types.Message):
     user = await sync_to_async(
@@ -234,21 +159,14 @@ async def my_data(message: types.Message):
 
 @dp.message_handler(lambda message: message.text and 'ИЗМЕНИТЬ ИМЯ💼' in message.text)
 async def name_commands(message: types.Message, state: FSMContext):
-    await UserState.name.set()
+    await UserState.first_name.set()
     await message.answer(text='Введите ваше имя', reply_markup=main_kb())
 
 
-@unsync
-def update_first_name(message):
-    user = TelegramUser.objects.get(chat_id=message.from_user.id)
-    user.first_name = message.text
-    user.save()
-
-
-@dp.message_handler(state=UserState.name)
+@dp.message_handler(state=UserState.first_name)
 async def def_change_name(message, state):
     if not message.text.isdigit():
-        update_first_name(message)
+        await sync_to_async(update_first_name)(message)
         await state.finish()
         await message.answer('Ваше Имя было успешно обновлено!!!!!!!', reply_markup=main_kb())
     else:
@@ -257,21 +175,14 @@ async def def_change_name(message, state):
 
 @dp.message_handler(lambda message: message.text and 'ИЗМЕНИТЬ РОСТ💼' in message.text)
 async def name_height(message: types.Message, state: FSMContext):
-    await UserState.heightt.set()
+    await UserState.height.set()
     await message.answer(text='Введите Ваш Рост', reply_markup=main_kb())
 
 
-@unsync
-def update_height(message):
-    user = TelegramUser.objects.get(chat_id=message.from_user.id)
-    user.height = message.text
-    user.save()
-
-
-@dp.message_handler(state=UserState.heightt)
+@dp.message_handler(state=UserState.height)
 async def change_height_in_databaze(message, state):
     if message.text.isdigit():
-        update_height(message)
+        await sync_to_async(update_height)(message)
         await state.finish()
         await message.answer('Ваш Рост был успешно обновлен!!!!!!!', reply_markup=main_kb())
     else:
@@ -280,44 +191,31 @@ async def change_height_in_databaze(message, state):
 
 @dp.message_handler(lambda message: message.text and 'ИЗМЕНИТЬ ВЕС💼' in message.text)
 async def weight_change(message: types.Message, state: FSMContext):
-    await UserState.weightt.set()
+    await UserState.weight.set()
     await message.answer(text='Укажите ваш вес', reply_markup=main_kb())
 
 
-@unsync
-def update_weight(message):
-    user = TelegramUser.objects.get(chat_id=message.from_user.id)
-    user.weight = message.text
-    user.save()
-
-
-@dp.message_handler(state=UserState.weightt)
+@dp.message_handler(state=UserState.weight)
 async def change_your_name_in_baza_danih(message, state):
+
     if message.text.isdigit():
-        update_weight(message)
+        await sync_to_async(update_weight)(message)
         await state.finish()
-        await message.answer('Ваш Вес был успешно обновлен!!!!!!!', reply_markup=main_kb())
+        await message.answer('Ваш Вес был успешно обновлен!!!!!!!',  reply_markup=main_kb())
     else:
         await message.answer('Введите правильные данные!')
 
 
 @dp.message_handler(lambda message: message.text and 'ИЗМЕНИТЬ ФАМИЛИЮ💼' in message.text)
 async def your_last_name(message: types.Message, state: FSMContext):
-    await UserState.family.set()
+    await UserState.last_name.set()
     await message.answer(f"{'<b>'}Ведите вашу фамилию {'</b>'}", parse_mode='HTML', reply_markup=main_kb())
 
 
-@unsync
-def update_last_name(message):
-    user = TelegramUser.objects.get(chat_id=message.from_user.id)
-    user.last_name = message.text
-    user.save()
-
-
-@dp.message_handler(state=UserState.family)
+@dp.message_handler(state=UserState.last_name)
 async def change_the_last_name(message, state):
     if not message.text.isdigit():
-        update_last_name(message)
+        await sync_to_async(update_last_name)(message)
         await state.finish()
         await message.answer('Ваша фамилия была успешно обновлена!!!!!!!', reply_markup=main_kb())
     else:
@@ -340,26 +238,6 @@ async def list_of_days(message: types.Message, state: FSMContext):
     msg = f"Текущая дата: {c_date}\nТекущее время: {c_time}"
     user = message.from_user.id
     await bot.send_message(user, msg, reply_markup=week_days())
-
-
-def get_exercise_keyboard(category_id):
-    exercises = Exercise.objects.filter(category_id=category_id)
-    keyboard = types.InlineKeyboardMarkup()
-    for exercise in exercises:
-        keyboard.add(types.InlineKeyboardButton(text=exercise.name, callback_data=f'work-day-{exercise.id}'))
-    return keyboard
-
-
-def count_exercice_trenirovka(chat_id, exercise_id):
-    user = TelegramUser.objects.get(chat_id=chat_id)
-    maxim = user.maximexercise_set.filter(exercise_id=exercise_id).last()
-    if not maxim:
-        return 0, ''
-    exercise = maxim.exercise
-    url = exercise.url
-    if form := exercise.formula:
-        return eval(form.format(maxim.maxim)), url
-    return 0, url
 
 
 @dp.callback_query_handler(lambda c: c.data.startswith('work-day'), )
