@@ -79,6 +79,13 @@ def search_kb() -> InlineKeyboardMarkup:
     return searchMenu
 
 
+def add_maxim_kb(exercise_id: int) -> InlineKeyboardMarkup:
+    addMaximMenu = InlineKeyboardMarkup(row_width=2)
+    bt1 = InlineKeyboardButton(text='Добавить', callback_data=f'add-maximum-{exercise_id}')
+    addMaximMenu.insert(bt1)
+    return addMaximMenu
+
+
 def get_inline_keyboard(exercises: list[Exercise], user: TelegramUser) -> list[InlineQueryResultArticle]:
     results = []
     for exercise in exercises:

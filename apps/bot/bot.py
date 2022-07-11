@@ -175,11 +175,10 @@ async def weight_change(message: types.Message, state: FSMContext):
 
 @dp.message_handler(state=UserState.weight)
 async def change_your_name_in_baza_danih(message, state):
-
     if message.text.isdigit():
         await sync_to_async(update_weight)(message)
         await state.finish()
-        await message.answer('Ваш Вес был успешно обновлен!!!!!!!',  reply_markup=main_kb())
+        await message.answer('Ваш Вес был успешно обновлен!!!!!!!', reply_markup=main_kb())
     else:
         await message.answer('Введите правильные данные!')
 
@@ -263,7 +262,7 @@ async def your_trenirovka(call: types.CallbackQuery):
         await bot.send_message(
             call.from_user.id,
             f'Сначала добавьте свои максимумы!',
-            reply_markup=search_kb()
+            reply_markup=add_maxim_kb(exercise_id=int(exercise_id))
         )
 
 
