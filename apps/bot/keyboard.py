@@ -2,18 +2,19 @@ from aiogram import types
 from aiogram.types import (
     ReplyKeyboardMarkup, KeyboardButton, InlineKeyboardMarkup, InlineKeyboardButton, InlineQueryResultArticle,
     InputTextMessageContent)
-from unsync import unsync
+from asgiref.sync import sync_to_async
 
-from apps import exercise
-from apps.exercise.models import Exercise, MaximExercise
+from apps.exercise.models import Exercise, MaximExercise, Category
 from apps.user.models import TelegramUser
 
 
 def main_kb() -> ReplyKeyboardMarkup:
     b1 = KeyboardButton('МОИ ДАННЫЕ💪')
     b2 = KeyboardButton('МОИ СИЛЛОВЫЕ💪')
-    b3 = KeyboardButton('ТРЕНИРОВКИ💪')
-    mainMenu = ReplyKeyboardMarkup(resize_keyboard=True).row(b1, b2).add(b3)
+    b3 = KeyboardButton('ПРОГРАММА ТРЕНИРОВОК💪')
+    b4 = KeyboardButton('ТВОЯ ТРЕНИРОВКА🍼')
+
+    mainMenu = ReplyKeyboardMarkup(resize_keyboard=True).row(b1, b2).add(b3, b4)
     return mainMenu
 
 
@@ -29,6 +30,32 @@ def week_days() -> ReplyKeyboardMarkup:
     weekMenu = ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True)
     weekMenu.add(b2, b3, b4, b5, b6, b7, b8, b1)
     return weekMenu
+
+
+def week_categoryes() -> ReplyKeyboardMarkup:
+    b1 = KeyboardButton('Назад⬅')
+    categori = Category.objects.all()
+    button1 = list()
+    weekcateg = ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True)
+    for i in categori:
+        button = KeyboardButton(text=i.category)
+        button1.append(button)
+    button1.append(b1)
+
+    buttons_per_row = 3
+    rows = list()
+    row = set()
+    for item in button1:
+        if len(row) == buttons_per_row:
+            rows.append(row)
+            row = set()
+        row.add(item)
+    if row:
+        rows.append(row)
+
+    for row in rows:
+        weekcateg.row(*row)
+    return weekcateg
 
 
 def user_redact(user: TelegramUser) -> ReplyKeyboardMarkup:
@@ -88,9 +115,3 @@ def save_maxim(user_id: int, exercise_id: int, maxim: int):
         defaults={'maxim': maxim},
     )
     return obj
-
-
-def update_last_name(message):
-    user = TelegramUser.objects.get(chat_id=message.from_user.id)
-    user.last_name = message.text
-    user.save()

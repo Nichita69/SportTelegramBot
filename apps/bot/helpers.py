@@ -1,6 +1,4 @@
-from unsync import unsync
-
-from apps.bot.keyboard import main_kb
+from apps.exercise.models import Category
 from apps.user.models import TelegramUser
 
 
@@ -15,6 +13,7 @@ def count_exercice_trenirovka(chat_id, exercise_id):
         return 0, ''
     exercise = maxim.exercise
     url = exercise.url
+
     if form := exercise.formula:
         return eval(form.format(maxim.maxim)), url
     return 0, url
@@ -50,3 +49,10 @@ def update_last_name(message):
     user = TelegramUser.objects.get(chat_id=message.from_user.id)
     user.last_name = message.text
     user.save()
+
+
+def get_category_by_name(message) -> int:
+    category = Category.objects.filter(category__icontains=message.text).first()
+    if category:
+        return category.id
+    return 0

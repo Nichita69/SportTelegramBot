@@ -19,3 +19,4 @@ class CategoryAdmin(admin.ModelAdmin):
 @register(Exercise)
 class ExerciseAdmin(admin.ModelAdmin):
     list_display = ('id', 'name', 'category_id', 'formula', 'url')
+    list_filter = ('category_id',)

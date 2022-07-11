@@ -1,6 +1,5 @@
 import logging
 from datetime import datetime
-from unittest.mock import call
 
 from asgiref.sync import sync_to_async
 from aiogram import Bot, Dispatcher, types
@@ -8,14 +7,15 @@ from aiogram.contrib.fsm_storage.memory import MemoryStorage
 from aiogram.dispatcher import FSMContext
 from aiogram.dispatcher.filters.state import StatesGroup, State
 from aiogram.types import InlineQuery
-from unsync import unsync
 
 from apps.bot.helpers import (
-    get_user, count_exercice_trenirovka, get_my_maxims, update_first_name, update_height, update_weight)
+    get_user, count_exercice_trenirovka, get_my_maxims, update_first_name, update_height, update_weight,
+    update_last_name, get_category_by_name)
 from apps.bot.keyboard import (
-    main_kb, search_kb, week_days, user_redact, get_inline_keyboard, get_exercise_keyboard, save_maxim,
-    update_last_name)
-from apps.exercise.models import Exercise
+    main_kb, search_kb, week_days, user_redact, get_inline_keyboard, get_exercise_keyboard, save_maxim, add_maxim_kb,
+    week_categoryes
+)
+from apps.exercise.models import Exercise, Category
 from apps.user.models import TelegramUser
 from config.settings import API_TOKEN
 
@@ -80,7 +80,7 @@ async def start_maxim(call: types.CallbackQuery):
     dp.storage.data[str(call.from_user.id)][str(call.from_user.id)]['data']['exercise'] = call.data.split('-')[-1]
     await bot.send_message(
         call.from_user.id,
-        'ВведитеR ваш максимум на раз:',
+        'Введите ваш максимум на раз:',
     )
 
 
@@ -135,22 +135,8 @@ async def my_dataa(inline_query: InlineQuery):
     await bot.answer_inline_query(inline_query_id=inline_query.id, results=results, cache_time=1)
 
 
-@dp.message_handler(lambda message: message.text and 'МОИ ДАННЫЕ💪' in message.text)
-async def my_data(message: types.Message):
-    user = await sync_to_async(TelegramUser.objects.get, thread_sensitive=True)(chat_id=message.from_user.id)
-
-    await bot.send_message(
-        message.from_user.id,
-        f'Имя: {user.first_name},\n'
-        f'Фамилия: {user.last_name},\n'
-        f'Вес: {user.weight} кг,\n'
-        f'Рост: {user.height} см',
-        reply_markup=user_redact(user)
-    )
-
-
 @dp.message_handler(lambda message: message.text and 'ИЗМЕНИТЬ ИМЯ💼' in message.text)
-async def name_commands(message: types.Message, state: FSMContext):
+async def name_commands(message: types.Message):
     await UserState.first_name.set()
     await message.answer(text='Введите ваше имя', reply_markup=main_kb())
 
@@ -223,8 +209,8 @@ async def back_command(message: types.Message):
     )
 
 
-@dp.message_handler(lambda message: message.text and 'ТРЕНИРОВКИ💪' in message.text)
-async def list_of_days(message: types.Message, state: FSMContext):
+@dp.message_handler(lambda message: message.text and 'ПРОГРАММА ТРЕНИРОВОК💪' in message.text)
+async def list_of_days(message: types.Message, state: FSMContext, ):
     current_dt = datetime.now().strftime("%y.%m.%d %H:%M:%S")
     c_date, c_time = current_dt.split()
     msg = f"Текущая дата: {c_date}\nТекущее время: {c_time}"
@@ -232,11 +218,37 @@ async def list_of_days(message: types.Message, state: FSMContext):
     await bot.send_message(user, msg, reply_markup=week_days())
 
 
+@dp.message_handler(lambda message: message.text and 'ТВОЯ ТРЕНИРОВКА🍼' in message.text)
+async def back_commagnd(message: types.Message, state: FSMContext, ):
+    current_dt = datetime.now().strftime("%y.%m.%d %H:%M:%S")
+    c_date, c_time = current_dt.split()
+    msg = f"Текущая дата: {c_date}\nТекущее время: {c_time}"
+    user = message.from_user.id
+    categori_kb = await sync_to_async(week_categoryes, thread_sensitive=True)()
+
+    await bot.send_message(user, msg, reply_markup=categori_kb)
+
+
+@dp.message_handler(lambda message: message.text and 'МОИ ДАННЫЕ💪' in message.text)
+async def my_data(message: types.Message):
+    user = await sync_to_async(TelegramUser.objects.get, thread_sensitive=True)(chat_id=message.from_user.id)
+
+    await bot.send_message(
+        message.from_user.id,
+        f'Имя: {user.first_name},\n'
+        f'Фамилия: {user.last_name},\n'
+        f'Вес: {user.weight} кг,\n'
+        f'Рост: {user.height} см',
+        reply_markup=user_redact(user)
+    )
+
+
 @dp.callback_query_handler(lambda c: c.data.startswith('work-day'), )
 async def your_trenirovka(call: types.CallbackQuery):
     exercise_id = call.data.split('-')[-1]
 
     number, url = await sync_to_async(count_exercice_trenirovka)(call.from_user.id, exercise_id)
+
     if number:
         await bot.send_message(
             call.from_user.id,
@@ -245,7 +257,7 @@ async def your_trenirovka(call: types.CallbackQuery):
         await bot.send_message(
             call.from_user.id,
             f'{url}',
-            reply_markup=week_days()
+            reply_markup=week_categoryes()
         )
     else:
         await bot.send_message(
@@ -256,7 +268,7 @@ async def your_trenirovka(call: types.CallbackQuery):
 
 
 @dp.message_handler()
-async def bot_message(message: types.Message):
+async def bot_go_to_bot(message: types.Message):
     # Depend on message.text we can send different messages using match
     category_id = 0
     match message.text:
@@ -270,10 +282,12 @@ async def bot_message(message: types.Message):
             category_id = 4
         case 'Пятница🏆':
             category_id = 5
-        case 'Суббота🏆':
-            category_id = 1
+        case 'Суботта🏆':
+            category_id = 2
         case 'Воскресенье🏖':
             category_id = 2
+    if category_id == 0:
+        category_id = await sync_to_async(get_category_by_name, thread_sensitive=True)(message)
     if category_id != 0:
         kb = await sync_to_async(get_exercise_keyboard)(category_id)
         await bot.send_message(
