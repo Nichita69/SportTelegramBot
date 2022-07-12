@@ -14,7 +14,7 @@ class Exercise(models.Model):
     category = models.ForeignKey(Category, on_delete=models.CASCADE, null=True)
     formula = models.CharField(max_length=150, blank=True, null=True)
     url = models.URLField(max_length=150, blank=True, null=True)
-    tutorial = models.URLField(max_length=150, blank=True, null=True)
+
 
 
 class MaximExercise(models.Model):

@@ -10,7 +10,7 @@ from aiogram.types import InlineQuery
 
 from apps.bot.helpers import (
     get_user, count_exercice_trenirovka, get_my_maxims, update_first_name, update_height, update_weight,
-    update_last_name, get_category_by_name)
+    update_last_name, get_category_by_name, week_category_urls)
 from apps.bot.keyboard import (
     main_kb, search_kb, week_days, user_redact, get_inline_keyboard, get_exercise_keyboard, save_maxim, add_maxim_kb,
     week_categoryes
@@ -223,7 +223,8 @@ async def back_commagnd(message: types.Message, state: FSMContext, ):
     c_date, c_time = current_dt.split()
     msg = f"Текущая дата: {c_date}\nТекущее время: {c_time}"
     user = message.from_user.id
-    categori_kb = await sync_to_async(week_categoryes, thread_sensitive=True)()
+    buttonss = await sync_to_async(week_category_urls, thread_sensitive=True)()
+    categori_kb = await sync_to_async(week_categoryes, thread_sensitive=True)(buttonss)
 
     await bot.send_message(user, msg, reply_markup=categori_kb)
 
@@ -245,7 +246,7 @@ async def my_data(message: types.Message):
 @dp.callback_query_handler(lambda c: c.data.startswith('work-day'), )
 async def your_trenirovka(call: types.CallbackQuery):
     exercise_id = call.data.split('-')[-1]
-
+    buttonss = await sync_to_async(week_category_urls, thread_sensitive=True)()
     number, url = await sync_to_async(count_exercice_trenirovka)(call.from_user.id, exercise_id)
 
     if number:
@@ -255,8 +256,8 @@ async def your_trenirovka(call: types.CallbackQuery):
         )
         await bot.send_message(
             call.from_user.id,
-            f'{url}',
-            reply_markup=week_categoryes()
+            url,
+            reply_markup=main_kb()
         )
     else:
         await bot.send_message(

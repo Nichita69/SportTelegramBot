@@ -32,20 +32,15 @@ def week_days() -> ReplyKeyboardMarkup:
     return weekMenu
 
 
-def week_categoryes() -> ReplyKeyboardMarkup:
+def week_categoryes(buttons) -> ReplyKeyboardMarkup:
     b1 = KeyboardButton('Назад⬅')
-    categori = Category.objects.all()
-    button1 = list()
     weekcateg = ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True)
-    for i in categori:
-        button = KeyboardButton(text=i.category)
-        button1.append(button)
-    button1.append(b1)
+    buttons.append(b1)
 
     buttons_per_row = 3
     rows = list()
     row = set()
-    for item in button1:
+    for item in buttons:
         if len(row) == buttons_per_row:
             rows.append(row)
             row = set()

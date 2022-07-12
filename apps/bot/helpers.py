@@ -1,3 +1,5 @@
+from aiogram.types import KeyboardButton
+
 from apps.exercise.models import Category
 from apps.user.models import TelegramUser
 
@@ -56,3 +58,12 @@ def get_category_by_name(message) -> int:
     if category:
         return category.id
     return 0
+
+
+def week_category_urls():
+    buttons = list()
+    categori = Category.objects.all()
+    for i in categori:
+        button = KeyboardButton(text=i.category)
+        buttons.append(button)
+    return buttons
