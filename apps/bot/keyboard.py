@@ -59,11 +59,11 @@ def user_redact(user: TelegramUser) -> ReplyKeyboardMarkup:
     b3 = KeyboardButton(f'ИЗМЕНИТЬ ВЕС💼({user.weight})')
     b4 = KeyboardButton(f'ИЗМЕНИТЬ РОСТ💼({user.height})')
     b5 = KeyboardButton('Назад⬅')
-
     dataMenu = ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True)
     dataMenu.add(b1, b2)
     dataMenu.add(b3, b4)
     dataMenu.add(b5)
+
     return dataMenu
 
 

@@ -16,7 +16,6 @@ class Exercise(models.Model):
     url = models.URLField(max_length=150, blank=True, null=True)
 
 
-
 class MaximExercise(models.Model):
     created_at = models.DateTimeField(auto_now_add=True, null=True)
     updated_at = models.DateTimeField(auto_now=True, null=True)

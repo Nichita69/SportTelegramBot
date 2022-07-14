@@ -60,12 +60,40 @@ async def send_welcome(message: types.Message):
 @dp.message_handler(commands=['help'])
 async def command_help(message: types.Message):
     await message.reply(
-        f"Мой бот это программа тренировок,мой бот может сделать программму тренеровок на несколько лет он "
-        f"расчитывает все "
-        f"по высокоточечным формулам и рассчитывает все по "
-        f"росту и весу ",
-        reply_markup=main_kb()
-    )
+        "Для начала Укажите Ваши данные, потом укажите ваши силовые , для того чтобы бот правильно работал ")
+    if message.answer("Для начала Укажите Ваши данные, потом укажите ваши силовые , для того чтобы бот правильно работал "):
+        await message.answer("https://prnt.sc/EmdWD1fLnf_Z")
+    if message.answer(
+                f" https://prnt.sc/EmdWD1fLnf_Z,\n"):
+            await message.answer("Эти Данные вы должны заполнить")
+    if message.answer(
+                    f"Эти Данные вы должны заполнить"):
+                await message.answer("Жмете поиск в мои силовые и у вас появляеться такое окно")
+    if message.answer(
+                    f"Жмете поиск в мои силовые и у вас появляеться такое окно"):
+                await message.answer("https://prnt.sc/DzpvJhteS1XD")
+    if message.answer(
+                    f"https://prnt.sc/DzpvJhteS1XD"):
+                await message.answer("Здесь вы должны указать ваш максимум в каждом из перечисленых упражнений")
+    if message.answer(
+            f"Здесь вы должны указать ваш максимум в каждом из перечисленых упражнений"):
+        await message.answer("Теперь перейдите в  ПРОГРАММА ТРЕНИРОВОК ИЛИ ТВОИ ТРЕНИРОВКИ")
+    if message.answer(
+                f"Теперь перейдите в  ПРОГРАММА ТРЕНИРОВОК ИЛИ ТВОИ ТРЕНИРОВКИ"):
+            await message.answer("https://prnt.sc/5c82DYcpUm1x")
+    if message.answer(
+            f"https://prnt.sc/5c82DYcpUm1x"):
+        await message.answer("Программа тренировок уже знает что вы должны делать в сегодняшний день ,вам просто нужно указать сегодняшний день")
+    if message.answer(
+            f"Программа тренировок уже знает что вы должны делать в сегодняшний день ,вам просто нужно указать сегодняшний день"):
+        await message.answer("https://prnt.sc/kJy_6X4diB5V")
+        if message.answer(
+                f"https://prnt.sc/kJy_6X4diB5V"):
+            await message.answer("В ТВОИ ТРЕНИРОВКИ есть категории упражнений ты сам можеш выбрать какие упражненеия ты хочеш делать сегодня")
+    if message.answer(
+            f"В ТВОИ ТРЕНИРОВКИ есть категории упражнений ты сам можеш выбрать какие упражненеия ты хочеш делать сегодня"):
+        await message.answer(
+            "https://prnt.sc/pxEEvWJLZZx8")
 
 
 @dp.callback_query_handler(lambda c: c.data.startswith('add-maximum'))
@@ -146,7 +174,7 @@ async def def_change_name(message, state):
     if not message.text.isdigit():
         await sync_to_async(update_first_name)(message)
         await state.finish()
-        await message.answer('Ваше Имя было успешно обновлено!!!!!!!', reply_markup=main_kb())
+        await message.answer('Ваше Имя было успешно обновлено!!!!!!!',reply_markup=main_kb())
     else:
         await message.answer('Введите правильные данные')
 
@@ -159,12 +187,12 @@ async def name_height(message: types.Message, state: FSMContext):
 
 @dp.message_handler(state=UserState.height)
 async def change_height_in_databaze(message, state):
-    if message.text.isdigit():
-        await sync_to_async(update_height)(message)
+    if  message.text.isdigit():
+        await sync_to_async(update_first_name)(message)
         await state.finish()
-        await message.answer('Ваш Рост был успешно обновлен!!!!!!!', reply_markup=main_kb())
+        await message.answer('Ваше Рсст было успешно обновлено!!!!!!!', reply_markup=main_kb())
     else:
-        await message.answer('Ведите Правильные Данные')
+        await message.answer('Введите данные в цифрах')
 
 
 @dp.message_handler(lambda message: message.text and 'ИЗМЕНИТЬ ВЕС💼' in message.text)
@@ -180,7 +208,7 @@ async def change_your_name_in_baza_danih(message, state):
         await state.finish()
         await message.answer('Ваш Вес был успешно обновлен!!!!!!!', reply_markup=main_kb())
     else:
-        await message.answer('Введите правильные данные!')
+        await message.answer('Введите ваш вес в цифрах')
 
 
 @dp.message_handler(lambda message: message.text and 'ИЗМЕНИТЬ ФАМИЛИЮ💼' in message.text)
